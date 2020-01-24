@@ -17,9 +17,9 @@ public:
 
 #ifdef HEPHAESTUS_PLATFORM_WIN32
     typedef HMODULE ModuleType; // win32
-#elif defined(HEPHAESTUSCORE_PLATFORM_LINUX)
+#elif defined(HEPHAESTUS_PLATFORM_LINUX)
     typedef void* ModuleType;
-#elif defined(HEPHAESTUSCORE_PLATFORM_ANDROID)
+#elif defined(HEPHAESTUS_PLATFORM_ANDROID)
     typedef void* ModuleType;
 #endif
 

@@ -8,6 +8,7 @@
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanMeshGraphicsPipeline.h>
 #include <hephaestus/VulkanHeadlessRenderer.h>
+#include <hephaestus/VulkanPlatformConfig.h>
 
 #include <cstdlib>
 #include <cassert>

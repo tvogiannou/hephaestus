@@ -3,6 +3,8 @@
 #include <common/Vector3.h>
 #include <common/Matrix3.h>
 
+#include <cfloat>
+
 
 namespace hephaestus
 {

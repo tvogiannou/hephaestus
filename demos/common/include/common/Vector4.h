@@ -46,32 +46,32 @@ public:
 
 public:
 	// math operations
-	__forceinline void Sub(const Vector4 &s) { x -= s.x; y -= s.y; z -= s.z; w -= s.w; }
-	__forceinline void Add(const Vector4 &s) { x += s.x; y += s.y; z += s.z; w += s.w; }
-	__forceinline void Mul(const Vector4 &s) { x *= s.x; y *= s.y; z *= s.z; w *= s.w; }
-	__forceinline void Div(const Vector4 &s) { x /= s.x; y /= s.y; z /= s.z; w /= s.w; }
-	__forceinline void Sub(float a) { x -= a; y -= a; z -= a; w -= a; }
-	__forceinline void Add(float a) { x += a; y += a; z += a; w += a; }
-	__forceinline void Mul(float a) { x *= a; y *= a; z *= a; w *= a; }
-	__forceinline void Div(float a) { x /= a; y /= a; z /= a; w /= a; }
+	 void Sub(const Vector4 &s) { x -= s.x; y -= s.y; z -= s.z; w -= s.w; }
+	 void Add(const Vector4 &s) { x += s.x; y += s.y; z += s.z; w += s.w; }
+	 void Mul(const Vector4 &s) { x *= s.x; y *= s.y; z *= s.z; w *= s.w; }
+	 void Div(const Vector4 &s) { x /= s.x; y /= s.y; z /= s.z; w /= s.w; }
+	 void Sub(float a) { x -= a; y -= a; z -= a; w -= a; }
+	 void Add(float a) { x += a; y += a; z += a; w += a; }
+	 void Mul(float a) { x *= a; y *= a; z *= a; w *= a; }
+	 void Div(float a) { x /= a; y /= a; z /= a; w /= a; }
 
 	/// invert components in place
-	__forceinline void Invert() { x = -x; y = -y; z = -z; w = -w; }
-	__forceinline void InvertX() { x = -x; }
-	__forceinline void InvertY() { y = -y; }
-	__forceinline void InvertZ() { z = -z; }
-	__forceinline void InvertW() { w = -w; }
+	 void Invert() { x = -x; y = -y; z = -z; w = -w; }
+	 void InvertX() { x = -x; }
+	 void InvertY() { y = -y; }
+	 void InvertZ() { z = -z; }
+	 void InvertW() { w = -w; }
 
 	/// Dot products
-	__forceinline float Dot() const { return x * x + y * y + z * z + w * w; }
-	__forceinline float Dot(const Vector4& other) const { return x * other.x + y * other.y + z * other.z + w * other.w; }
+	 float Dot() const { return x * x + y * y + z * z + w * w; }
+	 float Dot(const Vector4& other) const { return x * other.x + y * other.y + z * other.z + w * other.w; }
 
 	/// Coordinates sum
-	__forceinline float Sum() const { return x + y + z + w; }
+	 float Sum() const { return x + y + z + w; }
 	/// Vector normalization
-	__forceinline void Normalize() { Div(Norm()); }
+	 void Normalize() { Div(Norm()); }
 	/// Vector norm
-	__forceinline float Norm() const { return std::sqrtf(Dot()); }
+	 float Norm() const { return std::sqrt(Dot()); }
 	/// The normal in the direction of vector
 	Vector4 Normal() const 
 	{ 

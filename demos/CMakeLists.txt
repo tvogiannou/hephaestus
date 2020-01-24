@@ -31,7 +31,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/common/common.cmake)
 # headless renderer demo
 add_executable(headless-example ${CMAKE_CURRENT_LIST_DIR}/headless/RenderOBJToImageFile.cpp)
 target_include_directories(headless-example PRIVATE "${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/stb")
-target_link_libraries(headless-example PRIVATE hephaestus common)
+target_link_libraries(headless-example PRIVATE hephaestus common ${CMAKE_DL_LIBS})
 
 # real time app demo
 include(${CMAKE_CURRENT_LIST_DIR}/app/app.cmake)
