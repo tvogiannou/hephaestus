@@ -115,7 +115,7 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
         {
             updateInfo.copyCmdBuffer = copyCmdBuffer;
             updateInfo.data = imageData.data();
-            updateInfo.dataSize = imageData.size();
+            updateInfo.dataSize = (uint32_t)imageData.size();
             updateInfo.width = imageDesc.width;
             updateInfo.height = imageDesc.height;
         }
