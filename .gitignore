@@ -1,3 +1,7 @@
+# Local directories
+**/build
+**/local
+
 # Prerequisites
 *.d
 
