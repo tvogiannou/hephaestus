@@ -9,7 +9,7 @@
 *.slo
 *.lo
 *.o
-*.obj
+#*.obj # 3d asset obj files are used for test data
 
 # Precompiled Headers
 *.gch
