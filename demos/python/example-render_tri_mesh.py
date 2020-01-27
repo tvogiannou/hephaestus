@@ -15,7 +15,7 @@ def script_main():
 
     # points = [0,0,0, 0,1,0, 1,1,0, 1,0,0]
     # indices = [0,1,2, 0, 2, 3]
-    points, indices = hephaestus_bindings.load_obj("../data/teddy.obj")
+    points, indices = hephaestus_bindings.load_obj("../data/teapot.obj")
 
     # create a model from the mean mesh of the LSFM
     model = hephaestus_bindings.create_mesh(points, indices)

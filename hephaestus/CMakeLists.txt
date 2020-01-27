@@ -14,9 +14,10 @@ set(HEPHAESTUS_VULKAN_HEADERS_DIR "${CMAKE_CURRENT_LIST_DIR}/../external/vulkan-
 include(${CMAKE_CURRENT_LIST_DIR}/hephaestus.cmake)
 
 # compiler flags
-if(MSVC)
-    set_target_properties(hephaestus PROPERTIES COMPILE_FLAGS "/W4 /GR- /WX /Zc:wchar_t-")
-endif(MSVC)
-if(UNIX)
-    set_target_properties(hephaestus PROPERTIES COMPILE_FLAGS "-Wall -Werror -fno-rtti")
-endif(UNIX)
+# suggested flags, comment out to set or override from parent cmake script
+# if(MSVC)
+#     set_target_properties(hephaestus PROPERTIES COMPILE_FLAGS "/W4 /GR- /WX /Zc:wchar_t-")
+# endif(MSVC)
+# if(UNIX)
+#     set_target_properties(hephaestus PROPERTIES COMPILE_FLAGS "-Wall -Werror -fno-rtti")
+# endif(UNIX)

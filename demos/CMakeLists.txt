@@ -12,18 +12,22 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}) # set output directories for all projects to make it easier to track & test
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../hephaestus
-                 ${CMAKE_CURRENT_BINARY_DIR}/hephaestus-build
-                 EXCLUDE_FROM_ALL)
-
 
 # compiler flags for the rest of the targets
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /GR- /WX /Zc:wchar_t-")
 endif(MSVC)
 if(UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fno-rtti")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+
+    if(HEPHAESTUS_PYTHON_BINDINGS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ldl -lpthread -fpic")
+    endif()
 endif(UNIX)
+
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../hephaestus
+                 ${CMAKE_CURRENT_BINARY_DIR}/hephaestus-build
+                 EXCLUDE_FROM_ALL)
 
 # utils shared by all demos
 include(${CMAKE_CURRENT_LIST_DIR}/common/common.cmake)

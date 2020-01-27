@@ -382,8 +382,8 @@ HEPHAESTUS_BINDINGS_CreateMeshFromData(
 
         const size_t numVertices = vertexBufferInfo.shape[0];
         const size_t numIndices = indexBufferInfo.shape[0];
-        const size_t vertexCount = numVertices / 3u;
-        const size_t faceCount = numIndices / 3u;
+        // const size_t vertexCount = numVertices / 3u;
+        // const size_t faceCount = numIndices / 3u;
 
         CHECK_EXIT_MSG(hephaestus_bindings::Utils::CopyTriMeshToRenderMeshData(
             vtx, numVertices, idx, numIndices, nullptr, model.m_trimesh), 
@@ -427,7 +427,7 @@ HEPHAESTUS_BINDINGS_CreateUVMeshFromData(
         const size_t numVertices = vertexBufferInfo.shape[0];
         const size_t numIndices = indexBufferInfo.shape[0];
         const size_t vertexCount = numVertices / 3u;
-        const size_t faceCount = numIndices / 3u;
+        // const size_t faceCount = numIndices / 3u;
 
         const size_t numUVs = uvBufferInfo.shape[0] / 2u;
         if (numUVs != vertexCount)
