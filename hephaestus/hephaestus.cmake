@@ -38,3 +38,7 @@ add_library(hephaestus STATIC ${HEPHAESTUS_SOURCE_FILES})
 
 target_include_directories(hephaestus PUBLIC "${HEPHAESTUS_PUBLIC_HEADERS_DIR}")
 target_include_directories(hephaestus PUBLIC "${HEPHAESTUS_VULKAN_HEADERS_DIR}")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Android")
+    target_link_libraries(hephaestus PUBLIC log)
+endif()

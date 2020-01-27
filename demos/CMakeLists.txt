@@ -37,10 +37,13 @@ add_executable(headless-example ${CMAKE_CURRENT_LIST_DIR}/headless/RenderOBJToIm
 target_include_directories(headless-example PRIVATE "${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/stb")
 target_link_libraries(headless-example PRIVATE hephaestus common ${CMAKE_DL_LIBS})
 
-# real time app demo
-include(${CMAKE_CURRENT_LIST_DIR}/app/app.cmake)
+# non Android targets
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android")
+    # real time app demo
+    include(${CMAKE_CURRENT_LIST_DIR}/app/app.cmake)
 
-if(HEPHAESTUS_PYTHON_BINDINGS)
+    # python bindings
+    if(HEPHAESTUS_PYTHON_BINDINGS)
     add_subdirectory(${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/pybind11  ${CMAKE_CURRENT_BINARY_DIR}/pybind11-build)
     pybind11_add_module(hephaestus_bindings 
                         python/module.cpp
@@ -48,4 +51,5 @@ if(HEPHAESTUS_PYTHON_BINDINGS)
                         python/module.h)
     target_link_libraries(hephaestus_bindings
             PRIVATE hephaestus common)
-endif(HEPHAESTUS_PYTHON_BINDINGS)
+    endif(HEPHAESTUS_PYTHON_BINDINGS)
+endif()
