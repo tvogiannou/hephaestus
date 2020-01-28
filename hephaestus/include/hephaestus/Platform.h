@@ -1,13 +1,11 @@
 #pragma once
 
-// Core header for everything that relates to platform, compiler, builds, etc
-// Preferably it should be included in all files and definitions from here should
-// be used instead of platform specific types
+// header for everything that relates to platform, compiler, builds, etc
 
 // platform
 // TODO: iOS, MacOS
 #if defined(ANDROID) || defined(__ANDROID__)    // check for Android before any other platform since
-                                                // in cases of cross compilation both platforms are defined
+                                                // in case of cross compilation both platforms are defined
     #define HEPHAESTUS_PLATFORM_ANDROID 1
 #elif defined(_WIN32)
     #define HEPHAESTUS_PLATFORM_WIN32 1
@@ -51,7 +49,7 @@
     #endif
 #endif
 
-// Adapter for assert, mainly for more convienent use with the VC debugger 
+// Adapter for assert, mainly for more convenient use with the VC debugger 
 #ifdef HEPHAESTUS_DEBUG_BUILD
 	#if defined(HEPHAESTUS_PLATFORM_WIN32)
 		#include <CRTDBG.h>

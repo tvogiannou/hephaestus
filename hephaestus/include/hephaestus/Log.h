@@ -4,8 +4,6 @@
 
 #include <hephaestus/Platform.h>
 
-#include <functional> // for logger callback
-
 
 #ifdef HEPHAESTUS_DISABLE_LOGGER
     #define HEPHAESTUS_LOG_ERROR(format, ...) ((void)0)
@@ -29,7 +27,7 @@
 
 namespace hephaestus
 {
-// Simple logger, handles formatting and forwards messages to stateless static methods
+// Simple stateless logger, handles formatting and forwards messages to callback
 // Default backed by std io (printf)
 class Logger
 {
@@ -46,10 +44,10 @@ public:
     };
     
     // customizable callback (stateless)
-    // Does not support formating for simplification
-    using LogCallbackType = std::function<void(const char*, MessageType)>;
-
+    // Does not support formating for simplification, formatting is handled by the Logger
+    using LogCallbackType = void (*)(const char*, MessageType);
     static void SetCallback(LogCallbackType _callback);
+
     static void Log(MessageType msgType, const char* format, ...);
 
     // internal buffer size used by vnprintf, mostly for testing but could be relevant in other cases
@@ -57,9 +55,6 @@ public:
 
 private:
 
-    // TODO: maybe move this to the cpp file?
-    // default log callback using std io (printf)
-    static void s_LogStdIO(const char* message, MessageType);
     static LogCallbackType m_logCallback;
 };
 
