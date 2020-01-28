@@ -1,22 +1,15 @@
 #pragma once
 
-// Global singleton utility for logging; can forward to custom callback
+// utility for logging
 
 #include <hephaestus/Platform.h>
 
 
-#ifdef HEPHAESTUS_DISABLE_LOGGER
+#ifdef HEPHAESTUS_DISABLE_LOGGER    // define to build with disabled logging
     #define HEPHAESTUS_LOG_ERROR(format, ...) ((void)0)
     #define HEPHAESTUS_LOG_WARNING(format, ...) ((void)0)
     #define HEPHAESTUS_LOG_INFO(format, ...) ((void)0)
     #define HEPHAESTUS_LOG_ASSERT(expr, msg) (expr)
-#elif defined(HEPHAESTUS_PLATFORM_ANDROID) // custom logger for Android
-    #include <android/log.h>
-    #define HEPHAESTUS_LOG_TAG "HEPHAESTUS_LOG"
-    #define HEPHAESTUS_LOG_INFO(fmt, args...) __android_log_print(ANDROID_LOG_INFO, HEPHAESTUS_LOG_TAG, fmt, ##args)
-    #define HEPHAESTUS_LOG_WARNING(fmt, args...) __android_log_print(ANDROID_LOG_WARN, HEPHAESTUS_LOG_TAG, fmt, ##args)
-    #define HEPHAESTUS_LOG_ERROR(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, HEPHAESTUS_LOG_TAG, fmt, ##args)
-    #define HEPHAESTUS_LOG_ASSERT(expr, msg) if (!(expr)) { __android_log_assert(#expr, HEPHAESTUS_LOG_TAG, msg); }
 #else
     #define HEPHAESTUS_LOG_ERROR(format, ...) ::hephaestus::Logger::Log(::hephaestus::Logger::eMSG_ERROR, format, ##__VA_ARGS__)
     #define HEPHAESTUS_LOG_WARNING(format, ...) ::hephaestus::Logger::Log(::hephaestus::Logger::eMSG_WARNING, format, ##__VA_ARGS__)
@@ -58,4 +51,4 @@ private:
     static LogCallbackType m_logCallback;
 };
 
-}
+} // hephaestus

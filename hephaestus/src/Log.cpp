@@ -4,9 +4,37 @@
 #include <cstdio>   // for fprintf & printf
 #include <cstdarg>  // for var args
 
+#if defined(HEPHAESTUS_PLATFORM_ANDROID)
+#include <android/log.h>
+#endif
+
 
 namespace hephaestus
 {
+
+#if defined(HEPHAESTUS_PLATFORM_ANDROID) // custom logger for Android
+static
+void s_LogAndroid(const char* message, Logger::MessageType msgType)
+{
+    switch (msgType)
+    {
+    case Logger::MessageType::eMSG_ERROR:
+        __android_log_print(ANDROID_LOG_ERROR, "HEPHAESTUS_LOG", "%s", message);
+        break;
+    case Logger::MessageType::eMSG_WARNING:
+        __android_log_print(ANDROID_LOG_WARN, "HEPHAESTUS_LOG", "%s", message);
+        break;
+    case Logger::MessageType::eMSG_INFO:
+        __android_log_print(ANDROID_LOG_INFO, "HEPHAESTUS_LOG", "%s", message);
+        break;
+    
+    default:
+        break;
+    }
+}
+Logger::LogCallbackType Logger::m_logCallback = s_LogAndroid; // callback for android
+
+#else
 // default log callback using std io (printf)
 static
 void s_LogStdIO(const char* message, Logger::MessageType msgType)
@@ -26,8 +54,8 @@ void s_LogStdIO(const char* message, Logger::MessageType msgType)
     else
         std::printf("LOG %s: %s\n", typeToString[(uint32_t)msgType], message);
 }
-
 Logger::LogCallbackType Logger::m_logCallback = s_LogStdIO; // default callback
+#endif
 
 void 
 Logger::SetCallback(LogCallbackType _callback)
