@@ -66,6 +66,7 @@ public:
     // internal
     vk::DescriptorPool GetDescriptorPool() const { return m_descriptorPool.get(); }
     const VulkanUtils::BufferInfo& GetVertexBufferInfo() const { return m_vertexBufferInfo; }
+    const VulkanDeviceManager& GetDeviceManager() const { return m_deviceManager; }
 
     // override to record draw commands to the frame command buffer
     virtual void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& /*frameInfo*/) const {}

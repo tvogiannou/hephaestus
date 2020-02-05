@@ -177,18 +177,22 @@ VulkanGraphicsPipelineBase::UpdateLightPos(const std::array<float, 4>& lightPos,
 bool 
 VulkanGraphicsPipelineBase::UpdateUBO(vk::CommandBuffer copyCmdBuffer)
 {
-    alignas(16) std::array<char, 256> tembBuffer;
+    const uint32_t buffSize = 
+        VulkanUtils::FixupFlushRange(m_deviceManager, VulkanGraphicsPipelineBase::UBOData::UniformSize);
+
+    std::vector<char> tempBuffer;
+    tempBuffer.resize(buffSize);
     {
-        std::memcpy(&tembBuffer[0], m_uboData.projection.data(), 16 * sizeof(float));
-        std::memcpy(&tembBuffer[16 * sizeof(float)], m_uboData.model.data(), 16 * sizeof(float));
-        std::memcpy(&tembBuffer[32 * sizeof(float)], m_uboData.lightPos.data(), 4 * sizeof(float));
+        std::memcpy(&tempBuffer[0], m_uboData.projection.data(), 16 * sizeof(float));
+        std::memcpy(&tempBuffer[16 * sizeof(float)], m_uboData.model.data(), 16 * sizeof(float));
+        std::memcpy(&tempBuffer[32 * sizeof(float)], m_uboData.lightPos.data(), 4 * sizeof(float));
     }
 
     VulkanUtils::BufferUpdateInfo updateInfo;
     {
         updateInfo.copyCmdBuffer = copyCmdBuffer;
-        updateInfo.data = tembBuffer.data();
-        updateInfo.dataSize = UBOData::UniformSize;
+        updateInfo.data = tempBuffer.data();
+        updateInfo.dataSize = buffSize;
     }
 
     return UpdateUniformBufferData(updateInfo);

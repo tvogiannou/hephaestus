@@ -197,6 +197,8 @@ public:
 
     static bool CreateRenderPass(const VulkanDeviceManager& deviceManager, 
         vk::Format format, vk::ImageLayout finalLayout, RenderPassHandle& renderPass);
+
+    static uint32_t FixupFlushRange(const VulkanDeviceManager& deviceManager, uint32_t size);
 };
 
 }

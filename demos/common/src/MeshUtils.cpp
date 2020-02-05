@@ -83,25 +83,32 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
     outPipeline.CreateDescriptorPool();
 
     // allocate buffers for all data
-    const uint32_t vertexDataSize =
-        static_cast<uint32_t>(mesh.vertexData.size() * sizeof(float));
-    const uint32_t indexDataSize =
-        static_cast<uint32_t>(mesh.indices.size() * sizeof(uint32_t));
+    const uint32_t vertexDataSize = (uint32_t)(mesh.vertexData.size() * sizeof(float));
+    const uint32_t vertexCopyDataSize = 
+        VulkanUtils::FixupFlushRange(outPipeline.GetDeviceManager(), vertexDataSize);
 
-    constexpr uint32_t padding = 1000u;
-    const uint32_t stageSize = std::max<uint32_t>(
-        { vertexDataSize, indexDataSize }) + padding;
+    const uint32_t indexDataSize = (uint32_t)(mesh.indices.size() * sizeof(uint32_t));
+    const uint32_t indexCopyDataSize = 
+        VulkanUtils::FixupFlushRange(outPipeline.GetDeviceManager(), indexDataSize);
+    
+    // use temp buffer to data copy from so that vkFlushMappedMemoryRanges is always valid
+    const uint32_t maxCopySize = std::max<uint32_t>({ vertexCopyDataSize, indexCopyDataSize });
+    std::vector<char> tempBuffer(maxCopySize, 0);
+
+    // allocate stage buffer
+    constexpr uint32_t padding = 0x1000;
+    const uint32_t stageSize = maxCopySize + padding;
     outPipeline.CreateStageBuffer(stageSize);
 
     if (vertexDataSize > 0)
     {
-        if (!outPipeline.CreateVertexBuffer(vertexDataSize))
+        if (!outPipeline.CreateVertexBuffer(vertexCopyDataSize))
             return false;
     }
 
     if (indexDataSize > 0)
     {
-        if (!outPipeline.CreateIndexBuffer(indexDataSize))
+        if (!outPipeline.CreateIndexBuffer(indexCopyDataSize))
             return false;
     }
 
@@ -127,8 +134,19 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
         VulkanUtils::BufferUpdateInfo updateInfo;
         {
             updateInfo.copyCmdBuffer = copyCmdBuffer;
-            updateInfo.data = reinterpret_cast<const char*>(mesh.vertexData.data());
-            updateInfo.dataSize = vertexDataSize;
+
+            if (vertexDataSize < vertexCopyDataSize)
+            {
+                tempBuffer.assign(maxCopySize, 0u);
+                std::memcpy(tempBuffer.data(), mesh.vertexData.data(), vertexDataSize);
+                updateInfo.data = tempBuffer.data();
+                updateInfo.dataSize = vertexCopyDataSize;
+            }
+            else
+            {
+                updateInfo.data = reinterpret_cast<const char*>(mesh.vertexData.data());
+                updateInfo.dataSize = vertexDataSize;
+            }
         }
         if (!outPipeline.SubMeshSetVertexData(subMeshId, updateInfo))
             return false;
@@ -139,8 +157,19 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
         VulkanUtils::BufferUpdateInfo updateInfo;
         {
             updateInfo.copyCmdBuffer = copyCmdBuffer;
-            updateInfo.data = reinterpret_cast<const char*>(mesh.indices.data());
-            updateInfo.dataSize = indexDataSize;
+
+            if (indexDataSize < indexCopyDataSize)
+            {
+                tempBuffer.assign(maxCopySize, 0u);
+                std::memcpy(tempBuffer.data(), mesh.indices.data(), indexDataSize);
+                updateInfo.data = tempBuffer.data();
+                updateInfo.dataSize = indexDataSize;
+            }
+            else
+            {
+                updateInfo.data = reinterpret_cast<const char*>(mesh.indices.data());
+                updateInfo.dataSize = indexDataSize;
+            }
         }
         if (!outPipeline.SubMeshSetIndexData(subMeshId, updateInfo))
             return false;
@@ -148,7 +177,8 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
 
     // add uniform buffer
     {
-        const uint32_t bufferSize = VulkanGraphicsPipelineBase::UBOData::UniformSize;
+        const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
+            outPipeline.GetDeviceManager(), VulkanGraphicsPipelineBase::UBOData::UniformSize);
         if (!outPipeline.CreateUniformBuffer(bufferSize))
             return false;
     }
@@ -174,24 +204,39 @@ MeshUtils::SetupPrimitivesPipeline(
     outPipeline.CreateDescriptorPool();
 
     const uint32_t vertexDataSize =
-        std::max<uint32_t>(4u, (uint32_t)vertexData.size()) * sizeof(VulkanPrimitiveGraphicsPipeline::VertexData);
-    const uint32_t stageSize = 1024;    // stage not used atm
+        std::max<uint32_t>(4u, (uint32_t)vertexData.size()) * 
+        sizeof(VulkanPrimitiveGraphicsPipeline::VertexData);
+    const uint32_t vertexCopyDataSize = 
+        VulkanUtils::FixupFlushRange(outPipeline.GetDeviceManager(), vertexDataSize);
+    std::vector<char> tempBuffer(vertexCopyDataSize, 0);
 
+    const uint32_t stageSize = 0x1000;    // stage not used atm
     outPipeline.CreateStageBuffer(stageSize);
 
-    if (!outPipeline.CreateVertexBuffer(vertexDataSize))
+    if (!outPipeline.CreateVertexBuffer(vertexCopyDataSize))
         return false;
 
-    const uint32_t bufferSize = VulkanGraphicsPipelineBase::UBOData::UniformSize;
+    const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
+            outPipeline.GetDeviceManager(), VulkanGraphicsPipelineBase::UBOData::UniformSize);
     if (!outPipeline.CreateUniformBuffer(bufferSize))
         return false;
 
     VulkanUtils::BufferUpdateInfo updateInfo;
     {
         updateInfo.copyCmdBuffer = copyCmdBuffer;
-        updateInfo.data = reinterpret_cast<const char*>(vertexData.data());
-        updateInfo.dataSize =
-            (uint32_t)vertexData.size() * sizeof(VulkanPrimitiveGraphicsPipeline::VertexData);
+
+        if (vertexDataSize < vertexCopyDataSize)
+        {
+            std::memcpy(tempBuffer.data(), vertexData.data(), vertexDataSize);
+            updateInfo.data = tempBuffer.data();
+            updateInfo.dataSize = vertexCopyDataSize;
+        }
+        else
+        {
+            updateInfo.data = reinterpret_cast<const char*>(vertexData.data());
+            updateInfo.dataSize =
+                (uint32_t)vertexData.size() * sizeof(VulkanPrimitiveGraphicsPipeline::VertexData);
+        }
     }
     if (!outPipeline.AddLineStripData(updateInfo))
         return false;

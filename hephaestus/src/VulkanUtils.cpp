@@ -533,4 +533,15 @@ VulkanUtils::CreateRenderPass(const VulkanDeviceManager& deviceManager,
     return true;
 }
 
+
+uint32_t 
+VulkanUtils::FixupFlushRange(const VulkanDeviceManager& deviceManager, uint32_t size)
+{
+    const vk::PhysicalDeviceProperties& properties = 
+        deviceManager.GetPhysicalDevice().getProperties(deviceManager.GetDispatcher());
+    const uint32_t atomSize = (uint32_t)properties.limits.nonCoherentAtomSize;
+
+    return (size + atomSize - 1) & (~(atomSize - 1));
 }
+
+} // hephaestus
