@@ -11,18 +11,18 @@ namespace hephaestus
 {
 
 // Base class with common data for rendering pipelines
-class VulkanRendererBase
+class RendererBase
 {
 public:
 
     using Color4 = std::array<float, 4>;
 
 protected:
-    explicit VulkanRendererBase(const VulkanDeviceManager& _deviceManager) :
+    explicit RendererBase(const VulkanDeviceManager& _deviceManager) :
         m_deviceManager(_deviceManager),
         m_dispatcher(m_deviceManager.GetDispatcher())
     {}
-    ~VulkanRendererBase() { Clear(); }
+    ~RendererBase() { Clear(); }
 
     struct InitInfo
     {
@@ -43,7 +43,7 @@ public:
 
 protected:
     const VulkanDeviceManager&          m_deviceManager;
-    const VulkanFunctionDispatcher&     m_dispatcher;   // member var for convenient access
+    const VulkanDispatcher&     m_dispatcher;   // member var for convenient access
 
     Color4                              m_colorClearValues;
     VulkanUtils::CommandPoolHandle      m_graphicsCommandPool;
@@ -53,8 +53,8 @@ protected:
 
 private:
     // non-copyable
-    VulkanRendererBase(const VulkanRendererBase&) = delete;
-    void operator=(const VulkanRendererBase&) = delete;
+    RendererBase(const RendererBase&) = delete;
+    void operator=(const RendererBase&) = delete;
 };
 
 }

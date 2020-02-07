@@ -1,6 +1,6 @@
 #include <common/CommonUtils.h>
 
-#include <hephaestus/VulkanMeshGraphicsPipeline.h>
+#include <hephaestus/TriMeshPipeline.h>
 
 #include <fstream>
 #include <cassert>
@@ -91,7 +91,7 @@ CommonUtils::LoadObjFile(const char* filename, MeshUtils::TriMesh& triMesh, OBJF
             size_t texIndex = 0;
             triMesh.vertexCount = (uint32_t)(attrib.vertices.size() / 3);
             triMesh.vertexData.reserve(triMesh.vertexCount * 
-                (sizeof(VulkanMeshGraphicsPipeline::VertexData) / sizeof(float)));
+                (sizeof(TriMeshPipeline::VertexData) / sizeof(float)));
             while (vertexIndex < attrib.vertices.size())
             {
                 assert(!hasUVs || texIndex < attrib.texcoords.size());

@@ -2,8 +2,8 @@
 
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanDeviceManager.h>
-#include <hephaestus/VulkanFunctionDispatcher.h>
-#include <hephaestus/VulkanGraphicsPipelineBase.h>
+#include <hephaestus/VulkanDispatcher.h>
+#include <hephaestus/PipelineBase.h>
 
 #include <vector>
 
@@ -13,7 +13,7 @@ namespace hephaestus
 // Graphics pipeline that renders multiple meshes
 // - position/normal/uv/color vertex buffer
 // - projection & view matrix (using a uniform buffer)
-class VulkanMeshGraphicsPipeline : public VulkanGraphicsPipelineBase
+class TriMeshPipeline : public PipelineBase
 {
 public:
 
@@ -33,12 +33,12 @@ public:
     };
 
 public:
-	VulkanMeshGraphicsPipeline(const VulkanDeviceManager& _deviceManager) :
-		VulkanGraphicsPipelineBase(_deviceManager),
+	TriMeshPipeline(const VulkanDeviceManager& _deviceManager) :
+		PipelineBase(_deviceManager),
         m_indexBufferCurSize(0u)
 	{}
 
-	~VulkanMeshGraphicsPipeline() { Clear(); }
+	~TriMeshPipeline() { Clear(); }
 	void Clear();
 
 	// Resources shared by all sub-meshes
@@ -56,7 +56,7 @@ public:
 
     // Setup internal/Vulkan data, call after setting all mesh data
 	bool SetupPipeline(vk::RenderPass renderPass, 
-        const VulkanGraphicsPipelineBase::ShaderParams& shaderParams, const SetupParams& params);
+        const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
 
 	// base class overrides
 	void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const override;
@@ -68,7 +68,7 @@ private:
     void SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo, 
         const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo);
 
-    bool CreatePipeline(vk::RenderPass renderPass, const VulkanGraphicsPipelineBase::ShaderParams& shaderParams, const SetupParams& params);
+    bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
 	void CreatePipelineLayout();
 
 	// rendering pipeline setup

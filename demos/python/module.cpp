@@ -21,15 +21,15 @@ enum ShaderType
     eSHADER_FRAGMENT_PhongTexture
 };
 
-hephaestus::VulkanFunctionDispatcher::ModuleType s_vulkanLib = (hephaestus::VulkanFunctionDispatcher::ModuleType)nullptr;
-hephaestus::VulkanFunctionDispatcher s_dispatcher;
+hephaestus::VulkanDispatcher::ModuleType s_vulkanLib = (hephaestus::VulkanDispatcher::ModuleType)nullptr;
+hephaestus::VulkanDispatcher s_dispatcher;
 
 // container so that we can explicitly delete the data before exit()
 struct VulkanSystemInfo
 {
     hephaestus::VulkanDeviceManager deviceManager;
-    hephaestus::VulkanHeadlessRenderer renderer;
-    hephaestus::VulkanMeshGraphicsPipeline meshPipeline;
+    hephaestus::HeadlessRenderer renderer;
+    hephaestus::TriMeshPipeline meshPipeline;
     hephaestus::VulkanUtils::ShaderDB shaderDB;
 
     static VulkanSystemInfo& GetInstance()
@@ -51,7 +51,7 @@ struct VulkanSystemInfo
 
 // "local" singleton, no automatic release
 private:
-    VulkanSystemInfo(hephaestus::VulkanFunctionDispatcher& _dispatcher) :
+    VulkanSystemInfo(hephaestus::VulkanDispatcher& _dispatcher) :
         deviceManager(_dispatcher),
         renderer(deviceManager),
         meshPipeline(deviceManager)
@@ -72,13 +72,13 @@ void s_UnloadVulkanLib()
     if (s_vulkanLib)
     {
         FreeLibrary(s_vulkanLib);
-        s_vulkanLib = (hephaestus::VulkanFunctionDispatcher::ModuleType)nullptr;
+        s_vulkanLib = (hephaestus::VulkanDispatcher::ModuleType)nullptr;
     }
 #elif defined(HEPHAESTUS_PLATFORM_LINUX)
     if (s_vulkanLib)
     {
         dlclose(s_vulkanLib);
-        s_vulkanLib = (hephaestus::VulkanFunctionDispatcher::ModuleType)nullptr;
+        s_vulkanLib = (hephaestus::VulkanDispatcher::ModuleType)nullptr;
     }
 #endif
 }
@@ -120,7 +120,7 @@ HEPHAESTUS_BINDINGS_Init(uint32_t width, uint32_t height, const std::string& sha
 
     // init headless renderer
     {
-        hephaestus::VulkanHeadlessRenderer::InitInfo info = {};
+        hephaestus::HeadlessRenderer::InitInfo info = {};
         info.width = width;
         info.height = height;
         CHECK_EXIT_MSG(instance.renderer.Init(info), "Failed to init headless renderer");
@@ -169,12 +169,12 @@ HEPHAESTUS_BINDINGS_SetupForModel(const hephaestus_bindings::HEPHAESTUS_BINDINGS
     using namespace hephaestus_bindings_globals;
     VulkanSystemInfo& instance = VulkanSystemInfo::GetInstance();
 
-    hephaestus::VulkanGraphicsPipelineBase::ShaderParams shaderParams(instance.shaderDB);
+    hephaestus::PipelineBase::ShaderParams shaderParams(instance.shaderDB);
     {
         shaderParams.vertexShaderIndex = ShaderType::eSHADER_VERTEX_PNTC;
         shaderParams.fragmentShaderIndex = ShaderType::eSHADER_FRAGMENT_PhongTexture;
     }
-    hephaestus::VulkanMeshGraphicsPipeline::SetupParams params = {};
+    hephaestus::TriMeshPipeline::SetupParams params = {};
     CHECK_EXIT_MSG(hephaestus::MeshUtils::SetupPipelineForMesh(
         model.m_trimesh, model.m_texture.data, model.m_texture.desc, 
         instance.renderer.GetCmdBuffer(), instance.renderer.GetRenderPass(),
@@ -330,7 +330,7 @@ HEPHAESTUS_BINDINGS_RenderMeshOnImage(const hephaestus_bindings::HEPHAESTUS_BIND
     char* dstData = (char*)dstBufferInfo.ptr;
     {
         // get the color key as the clear color
-        hephaestus::VulkanRendererBase::Color4 clearColor = instance.renderer.GetClearColor();
+        hephaestus::RendererBase::Color4 clearColor = instance.renderer.GetClearColor();
         const std::array<char, 3> colorKey = {{
             (char)(clearColor[0] * 255.f),   // convert RGB to char values 
             (char)(clearColor[1] * 255.f),
@@ -466,7 +466,7 @@ HEPHAESTUS_BINDINGS_UpdateMeshPositions(
         if (numPositions * 3u != model.m_trimesh.vertexCount)
             throw std::runtime_error("Size of positions does not match model vertices");
 
-        const size_t step = sizeof(VulkanMeshGraphicsPipeline::VertexData) / sizeof(float);
+        const size_t step = sizeof(TriMeshPipeline::VertexData) / sizeof(float);
         for (size_t i = 0u; i < model.m_trimesh.vertexData.size(); i += step)
         {
             model.m_trimesh.vertexData[i] = *positionsBuffer++;
@@ -538,7 +538,7 @@ HEPHAESTUS_BINDINGS_LoadObjFile(const std::string& filename)
     // copy to output buffers
     std::memcpy(indicesBufferInfo.ptr, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t));
 
-    const uint32_t step = sizeof(VulkanMeshGraphicsPipeline::VertexData) / sizeof(float);
+    const uint32_t step = sizeof(TriMeshPipeline::VertexData) / sizeof(float);
     float* dst = verticesBuffer.mutable_data();
     for (size_t i = 0u; i < mesh.vertexData.size(); i += step)
     {

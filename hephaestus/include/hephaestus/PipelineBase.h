@@ -3,7 +3,7 @@
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanPlatformConfig.h>
 #include <hephaestus/VulkanDeviceManager.h>
-#include <hephaestus/VulkanFunctionDispatcher.h>
+#include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanUtils.h>
 
 #include <array>
@@ -16,7 +16,7 @@ namespace hephaestus
 // - vertex buffer
 // - descriptor pool
 // - uniform buffer object data for passing model view matrix to shader
-class VulkanGraphicsPipelineBase
+class PipelineBase
 {
 public:
 
@@ -38,12 +38,12 @@ public:
         VulkanUtils::ShaderDB::ShaderDBIndex fragmentShaderIndex;
     };
 
-    explicit VulkanGraphicsPipelineBase(const VulkanDeviceManager& _deviceManager) :
+    explicit PipelineBase(const VulkanDeviceManager& _deviceManager) :
         m_deviceManager(_deviceManager),
         m_dispatcher(_deviceManager.GetDispatcher()),
         m_vertexBufferCurSize(0u)
     {}
-    virtual ~VulkanGraphicsPipelineBase() { Clear(); }
+    virtual ~PipelineBase() { Clear(); }
 
     void Clear();
 
@@ -76,11 +76,11 @@ public:
 
 protected:
 
-    void GetShaderModules(const VulkanGraphicsPipelineBase::ShaderParams& shaderParams,
+    void GetShaderModules(const PipelineBase::ShaderParams& shaderParams,
         vk::ShaderModule& vertexShaderModule, vk::ShaderModule& fragmentShaderModule);
 
     const VulkanDeviceManager& m_deviceManager;
-    const VulkanFunctionDispatcher& m_dispatcher;	// reference for convenience
+    const VulkanDispatcher& m_dispatcher;	// reference for convenience
 
     // descriptor set data
     VulkanUtils::DescriptorPoolHandle m_descriptorPool;
@@ -99,8 +99,8 @@ protected:
 
 private: 
     // non-copyable
-    VulkanGraphicsPipelineBase(const VulkanGraphicsPipelineBase&) = delete;
-    void operator=(const VulkanGraphicsPipelineBase&) = delete;
+    PipelineBase(const PipelineBase&) = delete;
+    void operator=(const PipelineBase&) = delete;
 };
 
 }

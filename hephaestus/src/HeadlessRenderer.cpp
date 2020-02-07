@@ -1,21 +1,21 @@
-#include <hephaestus/VulkanHeadlessRenderer.h>
+#include <hephaestus/HeadlessRenderer.h>
 
 #include <hephaestus/Log.h>
-#include <hephaestus/VulkanGraphicsPipelineBase.h>
+#include <hephaestus/PipelineBase.h>
 
 
 namespace hephaestus
 {
 
 bool 
-VulkanHeadlessRenderer::Init(const InitInfo& info)
+HeadlessRenderer::Init(const InitInfo& info)
 {
-    VulkanRendererBase::InitInfo baseInfo;
+    RendererBase::InitInfo baseInfo;
     {
         baseInfo.outputImageLayout = vk::ImageLayout::eTransferSrcOptimal;
         baseInfo.colorFormat = info.colorFormat;
     }
-    if (!VulkanRendererBase::Init(baseInfo))
+    if (!RendererBase::Init(baseInfo))
         return false;
 
     m_extent.setWidth(info.width);
@@ -118,7 +118,7 @@ VulkanHeadlessRenderer::Init(const InitInfo& info)
 }
 
 void 
-VulkanHeadlessRenderer::Clear()
+HeadlessRenderer::Clear()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
     m_deviceManager.WaitDevice();
@@ -127,11 +127,11 @@ VulkanHeadlessRenderer::Clear()
     m_dstImageInfo.Clear();
     m_frameImageInfo.Clear();
 
-    VulkanRendererBase::Clear();
+    RendererBase::Clear();
 }
 
 bool 
-VulkanHeadlessRenderer::RenderPipeline(const VulkanGraphicsPipelineBase& pipeline) const
+HeadlessRenderer::RenderPipeline(const PipelineBase& pipeline) const
 {
     // render the pipeline
     {
@@ -328,7 +328,7 @@ VulkanHeadlessRenderer::RenderPipeline(const VulkanGraphicsPipelineBase& pipelin
 }
 
 bool 
-VulkanHeadlessRenderer::GetDstImageInfo(uint32_t& numChannels, uint32_t& width, uint32_t& height) const
+HeadlessRenderer::GetDstImageInfo(uint32_t& numChannels, uint32_t& width, uint32_t& height) const
 {
     // TODO
     numChannels = 4u;
@@ -339,7 +339,7 @@ VulkanHeadlessRenderer::GetDstImageInfo(uint32_t& numChannels, uint32_t& width, 
 }
 
 bool 
-VulkanHeadlessRenderer::GetDstImageData(char* data) const
+HeadlessRenderer::GetDstImageData(char* data) const
 {
     // Get layout of the image (including row pitch)
     vk::ImageSubresource subResource = {};

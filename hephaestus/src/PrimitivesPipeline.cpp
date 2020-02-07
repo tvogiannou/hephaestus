@@ -1,4 +1,4 @@
-#include <hephaestus/VulkanPrimitiveGraphicsPipeline.h>
+#include <hephaestus/PrimitivesPipeline.h>
 
 #include <hephaestus/Log.h>
 #include <hephaestus/VulkanValidate.h>
@@ -10,7 +10,7 @@ namespace hephaestus
 {
 
 void 
-VulkanPrimitiveGraphicsPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const
+PrimitivesPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
     // bind pipeline
     frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanGraphicsPipeline.get(), m_dispatcher);
@@ -38,7 +38,7 @@ VulkanPrimitiveGraphicsPipeline::RecordDrawCommands(const VulkanUtils::FrameUpda
 }
 
 bool 
-VulkanPrimitiveGraphicsPipeline::AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo)
+PrimitivesPipeline::AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
     if (!VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, 
         m_vertexBufferInfo, m_vertexBufferCurSize))
@@ -51,8 +51,8 @@ VulkanPrimitiveGraphicsPipeline::AddLineStripData(const VulkanUtils::BufferUpdat
 }
 
 bool 
-VulkanPrimitiveGraphicsPipeline::SetupPipeline(
-    vk::RenderPass renderPass, const VulkanGraphicsPipelineBase::ShaderParams& shaderParams)
+PrimitivesPipeline::SetupPipeline(
+    vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams)
 {
     if (!SetupDescriptorSets())
         return false;
@@ -64,8 +64,8 @@ VulkanPrimitiveGraphicsPipeline::SetupPipeline(
 }
 
 bool
-VulkanPrimitiveGraphicsPipeline::CreatePipeline(
-    vk::RenderPass renderPass, const VulkanGraphicsPipelineBase::ShaderParams& shaderParams)
+PrimitivesPipeline::CreatePipeline(
+    vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams)
 {
     HEPHAESTUS_LOG_ASSERT(renderPass, "No available render pass");
 
@@ -93,19 +93,19 @@ VulkanPrimitiveGraphicsPipeline::CreatePipeline(
 
     // vertex & primitives input
     vk::VertexInputBindingDescription vertexBindingDescription(
-        0, sizeof(VulkanPrimitiveGraphicsPipeline::VertexData), vk::VertexInputRate::eVertex);
+        0, sizeof(PrimitivesPipeline::VertexData), vk::VertexInputRate::eVertex);
 
     std::vector<vk::VertexInputAttributeDescription> vertexAttributeDescription;
     vertexAttributeDescription.emplace_back(
             0,									// position
             vertexBindingDescription.binding,
             vk::Format::eR32G32B32Sfloat,
-            (uint32_t)offsetof(struct VulkanPrimitiveGraphicsPipeline::VertexData, x));
+            (uint32_t)offsetof(struct PrimitivesPipeline::VertexData, x));
     vertexAttributeDescription.emplace_back(
             1,									// color
             vertexBindingDescription.binding,
             vk::Format::eR32G32B32Sfloat,
-            (uint32_t)offsetof(struct VulkanPrimitiveGraphicsPipeline::VertexData, r));
+            (uint32_t)offsetof(struct PrimitivesPipeline::VertexData, r));
 
     vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo(
         vk::PipelineVertexInputStateCreateFlags(),
@@ -219,7 +219,7 @@ VulkanPrimitiveGraphicsPipeline::CreatePipeline(
 }
 
 void 
-VulkanPrimitiveGraphicsPipeline::Clear()
+PrimitivesPipeline::Clear()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
     m_deviceManager.WaitDevice();
@@ -234,7 +234,7 @@ VulkanPrimitiveGraphicsPipeline::Clear()
 
     m_graphicsPipelineLayout.reset(nullptr);
     m_vulkanGraphicsPipeline.reset(nullptr);
-    VulkanGraphicsPipelineBase::Clear();
+    PipelineBase::Clear();
 }
 
 }

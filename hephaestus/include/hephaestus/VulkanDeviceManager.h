@@ -2,7 +2,7 @@
 
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanPlatformConfig.h>
-#include <hephaestus/VulkanFunctionDispatcher.h>
+#include <hephaestus/VulkanDispatcher.h>
 
 #include <vector>
 
@@ -25,7 +25,7 @@ public:
     static std::vector<char const*> GetInstanceRequiredExtensions(bool enableValidationLayers);
 
 public:
-    explicit VulkanDeviceManager(VulkanFunctionDispatcher& _dispatcher) :
+    explicit VulkanDeviceManager(VulkanDispatcher& _dispatcher) :
         m_dispatcher(_dispatcher)
     {}
 
@@ -48,7 +48,7 @@ public:
     void WaitDevice() const;
     void Clear();
 
-    const VulkanFunctionDispatcher& GetDispatcher() const { return m_dispatcher; }
+    const VulkanDispatcher& GetDispatcher() const { return m_dispatcher; }
 
     const vk::Instance& GetInstance() const { return m_instance.get(); }
     const vk::Device& GetDevice() const { return m_device.get(); }
@@ -78,17 +78,17 @@ private:
 #endif
 
 private:
-    VulkanFunctionDispatcher& m_dispatcher;
+    VulkanDispatcher& m_dispatcher;
 
-    vk::UniqueHandle<vk::Instance, VulkanFunctionDispatcher> m_instance;
-    vk::UniqueHandle<vk::Device, VulkanFunctionDispatcher> m_device;
+    vk::UniqueHandle<vk::Instance, VulkanDispatcher> m_instance;
+    vk::UniqueHandle<vk::Device, VulkanDispatcher> m_device;
     vk::PhysicalDevice m_physicalDevice;
-    vk::UniqueHandle<vk::SurfaceKHR, VulkanFunctionDispatcher> m_presentSurface;
+    vk::UniqueHandle<vk::SurfaceKHR, VulkanDispatcher> m_presentSurface;
     QueueInfo m_graphicsQueueInfo;
     QueueInfo m_presentQueueInfo;
 
     // debugging
-    vk::UniqueHandle<vk::DebugUtilsMessengerEXT, VulkanFunctionDispatcher> m_debugMessenger;
+    vk::UniqueHandle<vk::DebugUtilsMessengerEXT, VulkanDispatcher> m_debugMessenger;
 };
 
 }

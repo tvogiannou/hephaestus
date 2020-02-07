@@ -84,7 +84,7 @@ Utils::CopyTriMeshToRenderMeshData(
 }
 
 std::tuple<pybind11::array_t<uint8_t>, uint32_t, uint32_t, uint32_t>
-Utils::ExtractRendererDstImage(const hephaestus::VulkanHeadlessRenderer& renderer)
+Utils::ExtractRendererDstImage(const hephaestus::HeadlessRenderer& renderer)
 {
     // return the data
     uint32_t numChannels = 0u;

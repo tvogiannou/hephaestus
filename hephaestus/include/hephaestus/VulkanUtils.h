@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hephaestus/Platform.h>
-#include <hephaestus/VulkanFunctionDispatcher.h>
+#include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanPlatformConfig.h>
 
 #include <vector>
@@ -19,24 +19,24 @@ public:
     // Util types
 
     // Handler types for Vulkan objects
-    using ShaderModuleHandle = vk::UniqueHandle<vk::ShaderModule, hephaestus::VulkanFunctionDispatcher>;
-    using DescriptorPoolHandle = vk::UniqueHandle<vk::DescriptorPool, hephaestus::VulkanFunctionDispatcher>;
-    using RenderPassHandle = vk::UniqueHandle<vk::RenderPass, hephaestus::VulkanFunctionDispatcher>;
-    using CommandBufferHandle = vk::UniqueHandle<vk::CommandBuffer, hephaestus::VulkanFunctionDispatcher>;
-    using SwapChainHandle = vk::UniqueHandle<vk::SwapchainKHR, hephaestus::VulkanFunctionDispatcher>;
-    using ImageViewHandle = vk::UniqueHandle<vk::ImageView, hephaestus::VulkanFunctionDispatcher>;
-    using FramebufferHandle = vk::UniqueHandle<vk::Framebuffer, hephaestus::VulkanFunctionDispatcher>;
-    using FenceHandle = vk::UniqueHandle<vk::Fence, hephaestus::VulkanFunctionDispatcher>;
-    using SemaphoreHandle = vk::UniqueHandle<vk::Semaphore, hephaestus::VulkanFunctionDispatcher>;
-    using DescriptorSetHandle = vk::UniqueHandle<vk::DescriptorSet, hephaestus::VulkanFunctionDispatcher>;
-    using BufferHandle = vk::UniqueHandle<vk::Buffer, hephaestus::VulkanFunctionDispatcher>;
-    using DeviceMemoryHandle = vk::UniqueHandle<vk::DeviceMemory, hephaestus::VulkanFunctionDispatcher>;
-    using ImageHandle = vk::UniqueHandle<vk::Image, hephaestus::VulkanFunctionDispatcher>;
-    using SamplerHandle = vk::UniqueHandle<vk::Sampler, hephaestus::VulkanFunctionDispatcher>;
-    using CommandPoolHandle = vk::UniqueHandle<vk::CommandPool, hephaestus::VulkanFunctionDispatcher>;
-    using PipelineHandle = vk::UniqueHandle<vk::Pipeline, hephaestus::VulkanFunctionDispatcher>;
-    using PipelineLayoutHandle = vk::UniqueHandle<vk::PipelineLayout, hephaestus::VulkanFunctionDispatcher>;
-    using DescriptorSetLayoutHandle = vk::UniqueHandle<vk::DescriptorSetLayout, hephaestus::VulkanFunctionDispatcher>;
+    using ShaderModuleHandle = vk::UniqueHandle<vk::ShaderModule, hephaestus::VulkanDispatcher>;
+    using DescriptorPoolHandle = vk::UniqueHandle<vk::DescriptorPool, hephaestus::VulkanDispatcher>;
+    using RenderPassHandle = vk::UniqueHandle<vk::RenderPass, hephaestus::VulkanDispatcher>;
+    using CommandBufferHandle = vk::UniqueHandle<vk::CommandBuffer, hephaestus::VulkanDispatcher>;
+    using SwapChainHandle = vk::UniqueHandle<vk::SwapchainKHR, hephaestus::VulkanDispatcher>;
+    using ImageViewHandle = vk::UniqueHandle<vk::ImageView, hephaestus::VulkanDispatcher>;
+    using FramebufferHandle = vk::UniqueHandle<vk::Framebuffer, hephaestus::VulkanDispatcher>;
+    using FenceHandle = vk::UniqueHandle<vk::Fence, hephaestus::VulkanDispatcher>;
+    using SemaphoreHandle = vk::UniqueHandle<vk::Semaphore, hephaestus::VulkanDispatcher>;
+    using DescriptorSetHandle = vk::UniqueHandle<vk::DescriptorSet, hephaestus::VulkanDispatcher>;
+    using BufferHandle = vk::UniqueHandle<vk::Buffer, hephaestus::VulkanDispatcher>;
+    using DeviceMemoryHandle = vk::UniqueHandle<vk::DeviceMemory, hephaestus::VulkanDispatcher>;
+    using ImageHandle = vk::UniqueHandle<vk::Image, hephaestus::VulkanDispatcher>;
+    using SamplerHandle = vk::UniqueHandle<vk::Sampler, hephaestus::VulkanDispatcher>;
+    using CommandPoolHandle = vk::UniqueHandle<vk::CommandPool, hephaestus::VulkanDispatcher>;
+    using PipelineHandle = vk::UniqueHandle<vk::Pipeline, hephaestus::VulkanDispatcher>;
+    using PipelineLayoutHandle = vk::UniqueHandle<vk::PipelineLayout, hephaestus::VulkanDispatcher>;
+    using DescriptorSetLayoutHandle = vk::UniqueHandle<vk::DescriptorSetLayout, hephaestus::VulkanDispatcher>;
 
     // Container with info for recording draw commands during a frame update
     struct FrameUpdateInfo

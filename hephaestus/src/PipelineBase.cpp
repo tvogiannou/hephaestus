@@ -1,4 +1,4 @@
-#include <hephaestus/VulkanGraphicsPipelineBase.h>
+#include <hephaestus/PipelineBase.h>
 
 #include <hephaestus/Log.h>
 
@@ -7,14 +7,14 @@ namespace hephaestus
 {
 
 void
-VulkanGraphicsPipelineBase::CreateStageBuffer(uint32_t stageSize)
+PipelineBase::CreateStageBuffer(uint32_t stageSize)
 {
 	VulkanUtils::CreateBuffer(m_deviceManager, stageSize,
 		vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible, m_stageBufferInfo);
 }
 
 bool
-VulkanGraphicsPipelineBase::CreateVertexBuffer(uint32_t size)
+PipelineBase::CreateVertexBuffer(uint32_t size)
 {
 	return VulkanUtils::CreateBuffer(m_deviceManager, size,
 		vk::BufferUsageFlagBits::eVertexBuffer,
@@ -23,14 +23,14 @@ VulkanGraphicsPipelineBase::CreateVertexBuffer(uint32_t size)
 }
 
 void 
-VulkanGraphicsPipelineBase::CreateDescriptorPool(uint32_t uniformSize /*= 5*/, uint32_t combinedImgSamplerSize /*= 5*/)
+PipelineBase::CreateDescriptorPool(uint32_t uniformSize /*= 5*/, uint32_t combinedImgSamplerSize /*= 5*/)
 {
     VulkanUtils::CreateDescriptorPool(
         m_deviceManager, uniformSize, combinedImgSamplerSize, m_descriptorPool);
 }
 
 bool
-VulkanGraphicsPipelineBase::AppendVertexData(const VulkanUtils::BufferUpdateInfo& updateInfo)
+PipelineBase::AppendVertexData(const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
 	if (!VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, m_vertexBufferInfo))
         return false;
@@ -41,7 +41,7 @@ VulkanGraphicsPipelineBase::AppendVertexData(const VulkanUtils::BufferUpdateInfo
 }
 
 bool 
-VulkanGraphicsPipelineBase::SetupDescriptorSets()
+PipelineBase::SetupDescriptorSets()
 {
     if (!m_descriptorPool)
         return false;
@@ -69,7 +69,7 @@ VulkanGraphicsPipelineBase::SetupDescriptorSets()
             m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
         std::vector<vk::DescriptorSet> descSet =
             m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo, m_dispatcher);
-        vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanFunctionDispatcher> deleter(
+        vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
             m_deviceManager.GetDevice(), m_descriptorPool.get(), m_dispatcher);
         m_descriptorSetInfo.handle =
             VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
@@ -98,8 +98,8 @@ VulkanGraphicsPipelineBase::SetupDescriptorSets()
 }
 
 void 
-VulkanGraphicsPipelineBase::GetShaderModules(
-    const VulkanGraphicsPipelineBase::ShaderParams& shaderParams, 
+PipelineBase::GetShaderModules(
+    const PipelineBase::ShaderParams& shaderParams, 
     vk::ShaderModule& vertexShaderModule, 
     vk::ShaderModule& fragmentShaderModule)
 {
@@ -108,7 +108,7 @@ VulkanGraphicsPipelineBase::GetShaderModules(
 }
 
 bool 
-VulkanGraphicsPipelineBase::CreateUniformBuffer(uint32_t bufferSize)
+PipelineBase::CreateUniformBuffer(uint32_t bufferSize)
 {
     return VulkanUtils::CreateBuffer(m_deviceManager, bufferSize,
         vk::BufferUsageFlagBits::eUniformBuffer,
@@ -117,13 +117,13 @@ VulkanGraphicsPipelineBase::CreateUniformBuffer(uint32_t bufferSize)
 }
 
 bool 
-VulkanGraphicsPipelineBase::UpdateUniformBufferData(const VulkanUtils::BufferUpdateInfo& updateInfo)
+PipelineBase::UpdateUniformBufferData(const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
     return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, m_uniformBufferInfo);
 }
 
 void 
-VulkanGraphicsPipelineBase::Clear()
+PipelineBase::Clear()
 {
 	HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
 	m_deviceManager.WaitDevice();
@@ -141,7 +141,7 @@ VulkanGraphicsPipelineBase::Clear()
 }
 
 bool 
-VulkanGraphicsPipelineBase::UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
+PipelineBase::UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     m_uboData.projection = projectionMatrix;
 
@@ -149,7 +149,7 @@ VulkanGraphicsPipelineBase::UpdateProjectionMatrix(const std::array<float, 16>& 
 }
 
 bool 
-VulkanGraphicsPipelineBase::UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
+PipelineBase::UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     m_uboData.model = viewMatrix;
 
@@ -157,7 +157,7 @@ VulkanGraphicsPipelineBase::UpdateViewMatrix(const std::array<float, 16>& viewMa
 }
 
 bool
-VulkanGraphicsPipelineBase::UpdateViewAndProjectionMatrix(
+PipelineBase::UpdateViewAndProjectionMatrix(
     const std::array<float, 16>& viewMatrix, const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     m_uboData.model = viewMatrix;
@@ -167,7 +167,7 @@ VulkanGraphicsPipelineBase::UpdateViewAndProjectionMatrix(
 }
 
 bool
-VulkanGraphicsPipelineBase::UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer)
+PipelineBase::UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer)
 {
     m_uboData.lightPos = lightPos;
 
@@ -175,10 +175,10 @@ VulkanGraphicsPipelineBase::UpdateLightPos(const std::array<float, 4>& lightPos,
 }
 
 bool 
-VulkanGraphicsPipelineBase::UpdateUBO(vk::CommandBuffer copyCmdBuffer)
+PipelineBase::UpdateUBO(vk::CommandBuffer copyCmdBuffer)
 {
     const uint32_t buffSize = 
-        VulkanUtils::FixupFlushRange(m_deviceManager, VulkanGraphicsPipelineBase::UBOData::UniformSize);
+        VulkanUtils::FixupFlushRange(m_deviceManager, PipelineBase::UBOData::UniformSize);
 
     std::vector<char> tempBuffer;
     tempBuffer.resize(buffSize);

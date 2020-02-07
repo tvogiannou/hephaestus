@@ -19,7 +19,7 @@
 #include <hephaestus/VulkanPlatformConfig.h>
 #include <vulkan/vulkan.h>
 
-#include <hephaestus/VulkanFunctionDispatcher.h>
+#include <hephaestus/VulkanDispatcher.h>
 
 
 #define IMGUI_VK_QUEUED_FRAMES      3
@@ -37,7 +37,7 @@ struct ImGui_ImplVulkan_InitInfo
     const VkAllocationCallbacks*    Allocator;
     void                            (*CheckVkResultFn)(VkResult err);
 
-	const hephaestus::VulkanFunctionDispatcher* dispatcher;
+	const hephaestus::VulkanDispatcher* dispatcher;
 };
 
 // Called by user code

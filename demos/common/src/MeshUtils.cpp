@@ -1,7 +1,7 @@
 #include <common/MeshUtils.h>
 
 #include <common/Vector3.h>
-#include <hephaestus/VulkanMeshGraphicsPipeline.h>
+#include <hephaestus/TriMeshPipeline.h>
 
 namespace hephaestus
 {
@@ -11,7 +11,7 @@ MeshUtils::ComputeSmoothNormals(TriMesh& mesh)
 {
     using namespace hephaestus;
 
-    const uint32_t step = sizeof(VulkanMeshGraphicsPipeline::VertexData) / sizeof(float);
+    const uint32_t step = sizeof(TriMeshPipeline::VertexData) / sizeof(float);
 
     std::vector<Vector3> normals(mesh.vertexCount, Vector3::ZERO);
     for (size_t i = 0; i < mesh.indices.size(); i += 3u)
@@ -60,7 +60,7 @@ MeshUtils::ComputeBoundingBox(const TriMesh& trimesh)
     AxisAlignedBoundingBox bbox;
     bbox.Reset();
 
-    const size_t step = sizeof(VulkanMeshGraphicsPipeline::VertexData) / sizeof(float);
+    const size_t step = sizeof(TriMeshPipeline::VertexData) / sizeof(float);
     for (size_t i = 0u; i < trimesh.vertexData.size(); i += step)
     {
         bbox.AddPoint(Vector3(trimesh.vertexData[i],
@@ -75,9 +75,9 @@ bool
 MeshUtils::SetupPipelineForMesh(const TriMesh& mesh, 
     const std::vector<char>& imageData, const ImageDesc& imageDesc,
     vk::CommandBuffer copyCmdBuffer, vk::RenderPass renderPass,
-    const VulkanGraphicsPipelineBase::ShaderParams& shaderParams,
-    const VulkanMeshGraphicsPipeline::SetupParams& pipelineParams,
-    hephaestus::VulkanMeshGraphicsPipeline& outPipeline)
+    const PipelineBase::ShaderParams& shaderParams,
+    const TriMeshPipeline::SetupParams& pipelineParams,
+    hephaestus::TriMeshPipeline& outPipeline)
 {
     outPipeline.Clear();
     outPipeline.CreateDescriptorPool();
@@ -112,7 +112,7 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
             return false;
     }
 
-    VulkanMeshGraphicsPipeline::SubMeshIDType subMeshId = outPipeline.SubMeshCreate();
+    TriMeshPipeline::SubMeshIDType subMeshId = outPipeline.SubMeshCreate();
 
     // update texture
     {
@@ -178,7 +178,7 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
     // add uniform buffer
     {
         const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-            outPipeline.GetDeviceManager(), VulkanGraphicsPipelineBase::UBOData::UniformSize);
+            outPipeline.GetDeviceManager(), PipelineBase::UBOData::UniformSize);
         if (!outPipeline.CreateUniformBuffer(bufferSize))
             return false;
     }
@@ -192,11 +192,11 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
 
 bool 
 MeshUtils::SetupPrimitivesPipeline(
-    std::vector<VulkanPrimitiveGraphicsPipeline::VertexData> vertexData,
+    std::vector<PrimitivesPipeline::VertexData> vertexData,
     vk::CommandBuffer copyCmdBuffer,
     vk::RenderPass renderPass,
-    const VulkanGraphicsPipelineBase::ShaderParams& shaderParams, 
-    VulkanPrimitiveGraphicsPipeline& outPipeline)
+    const PipelineBase::ShaderParams& shaderParams, 
+    PrimitivesPipeline& outPipeline)
 {
     using namespace hephaestus;
 
@@ -205,7 +205,7 @@ MeshUtils::SetupPrimitivesPipeline(
 
     const uint32_t vertexDataSize =
         std::max<uint32_t>(4u, (uint32_t)vertexData.size()) * 
-        sizeof(VulkanPrimitiveGraphicsPipeline::VertexData);
+        sizeof(PrimitivesPipeline::VertexData);
     const uint32_t vertexCopyDataSize = 
         VulkanUtils::FixupFlushRange(outPipeline.GetDeviceManager(), vertexDataSize);
     std::vector<char> tempBuffer(vertexCopyDataSize, 0);
@@ -217,7 +217,7 @@ MeshUtils::SetupPrimitivesPipeline(
         return false;
 
     const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-            outPipeline.GetDeviceManager(), VulkanGraphicsPipelineBase::UBOData::UniformSize);
+            outPipeline.GetDeviceManager(), PipelineBase::UBOData::UniformSize);
     if (!outPipeline.CreateUniformBuffer(bufferSize))
         return false;
 
@@ -235,7 +235,7 @@ MeshUtils::SetupPrimitivesPipeline(
         {
             updateInfo.data = reinterpret_cast<const char*>(vertexData.data());
             updateInfo.dataSize =
-                (uint32_t)vertexData.size() * sizeof(VulkanPrimitiveGraphicsPipeline::VertexData);
+                (uint32_t)vertexData.size() * sizeof(PrimitivesPipeline::VertexData);
         }
     }
     if (!outPipeline.AddLineStripData(updateInfo))

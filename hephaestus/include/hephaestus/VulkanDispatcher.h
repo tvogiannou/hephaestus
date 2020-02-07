@@ -11,7 +11,7 @@ namespace hephaestus
 
 // Dispatcher to be used with Vulkan.hpp objects so that Vulkan functions can be loaded dynamically
 // See DispatchLoaderDynamic in vulkan.hpp for available functions (per platform)
-class VulkanFunctionDispatcher
+class VulkanDispatcher
 {
 public:
 

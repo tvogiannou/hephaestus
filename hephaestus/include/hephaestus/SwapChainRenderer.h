@@ -2,8 +2,8 @@
 
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanDeviceManager.h>
-#include <hephaestus/VulkanGraphicsPipelineBase.h>
-#include <hephaestus/VulkanRendererBase.h>
+#include <hephaestus/PipelineBase.h>
+#include <hephaestus/RendererBase.h>
 #include <hephaestus/VulkanUtils.h>
 
 #include <vector>
@@ -12,11 +12,11 @@
 namespace hephaestus
 {
 
-class VulkanSwapChainRenderer : public VulkanRendererBase
+class SwapChainRenderer : public RendererBase
 {
 public:
 
-    using PipelineArray = std::vector<const VulkanGraphicsPipelineBase*>;
+    using PipelineArray = std::vector<const PipelineBase*>;
 
     struct RenderStats
     {
@@ -37,12 +37,12 @@ public:
     };
 
 
-    explicit VulkanSwapChainRenderer(const VulkanDeviceManager& _deviceManager) :
-        VulkanRendererBase(_deviceManager)
+    explicit SwapChainRenderer(const VulkanDeviceManager& _deviceManager) :
+        RendererBase(_deviceManager)
     {}
-    ~VulkanSwapChainRenderer() { Clear(); }
+    ~SwapChainRenderer() { Clear(); }
 
-    struct InitInfo : public VulkanRendererBase::InitInfo
+    struct InitInfo : public RendererBase::InitInfo
     {
         uint32_t numVirtualFrames = 3u;
     };

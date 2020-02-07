@@ -1,8 +1,8 @@
 #pragma once
 
 #include <common/AxisAlignedBoundingBox.h>
-#include <hephaestus/VulkanMeshGraphicsPipeline.h>
-#include <hephaestus/VulkanPrimitiveGraphicsPipeline.h>
+#include <hephaestus/TriMeshPipeline.h>
+#include <hephaestus/PrimitivesPipeline.h>
 #include <hephaestus/VulkanUtils.h>
 
 #include <vector>
@@ -41,16 +41,16 @@ struct MeshUtils
         const std::vector<char>& imageData, const ImageDesc& imageDesc,
         vk::CommandBuffer copyCmdBuffer,
         vk::RenderPass renderPass,
-        const VulkanGraphicsPipelineBase::ShaderParams& shaderParams,
-        const VulkanMeshGraphicsPipeline::SetupParams& pipelineParams,
-        VulkanMeshGraphicsPipeline& outPipeline);
+        const PipelineBase::ShaderParams& shaderParams,
+        const TriMeshPipeline::SetupParams& pipelineParams,
+        TriMeshPipeline& outPipeline);
 
     static bool SetupPrimitivesPipeline(
-        std::vector<VulkanPrimitiveGraphicsPipeline::VertexData> vertexData,
+        std::vector<PrimitivesPipeline::VertexData> vertexData,
         vk::CommandBuffer copyCmdBuffer,
         vk::RenderPass renderPass,
-        const VulkanGraphicsPipelineBase::ShaderParams& shaderParams,
-        VulkanPrimitiveGraphicsPipeline& outPipeline);
+        const PipelineBase::ShaderParams& shaderParams,
+        PrimitivesPipeline& outPipeline);
 };
 
 }

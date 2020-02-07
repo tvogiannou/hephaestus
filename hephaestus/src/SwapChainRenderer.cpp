@@ -1,4 +1,4 @@
-#include <hephaestus/VulkanSwapChainRenderer.h>
+#include <hephaestus/SwapChainRenderer.h>
 
 #include <hephaestus/Log.h>
 
@@ -9,7 +9,7 @@ namespace hephaestus
 {
 
 bool 
-VulkanSwapChainRenderer::Init(const InitInfo& info)
+SwapChainRenderer::Init(const InitInfo& info)
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
 
@@ -17,12 +17,12 @@ VulkanSwapChainRenderer::Init(const InitInfo& info)
         return false;
 
     // Need to initialize AFTER creating the swap chain since we are using the format from it
-    VulkanRendererBase::InitInfo baseInfo;
+    RendererBase::InitInfo baseInfo;
     {
         baseInfo.outputImageLayout = vk::ImageLayout::ePresentSrcKHR;
         baseInfo.colorFormat = m_swapChainInfo.format;
     }
-    if (!VulkanRendererBase::Init(baseInfo))
+    if (!RendererBase::Init(baseInfo))
         return false;
 
     if (!CreateRenderingResources(info.numVirtualFrames))
@@ -32,7 +32,7 @@ VulkanSwapChainRenderer::Init(const InitInfo& info)
 }
 
 void 
-VulkanSwapChainRenderer::Clear()
+SwapChainRenderer::Clear()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
     m_deviceManager.WaitDevice();
@@ -41,11 +41,11 @@ VulkanSwapChainRenderer::Clear()
     for (VulkanUtils::VirtualFrameResources& frame : m_virtualFrames)
         frame.Clear();
 
-    VulkanRendererBase::Clear();
+    RendererBase::Clear();
 }
 
-VulkanSwapChainRenderer::RenderStatus
-VulkanSwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& stats)
+SwapChainRenderer::RenderStatus
+SwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& stats)
 {
     // update resource index
     HEPHAESTUS_LOG_ASSERT(m_virtualFrameIndex < m_virtualFrames.size(), "Virtual frame index out of range");
@@ -178,7 +178,7 @@ VulkanSwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderS
 }
 
 bool 
-VulkanSwapChainRenderer::CreateRenderingResources(uint32_t numVirtualFrames)
+SwapChainRenderer::CreateRenderingResources(uint32_t numVirtualFrames)
 {
     if (numVirtualFrames == 0)
         return false;
@@ -193,7 +193,7 @@ VulkanSwapChainRenderer::CreateRenderingResources(uint32_t numVirtualFrames)
             m_graphicsCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
         std::vector<vk::CommandBuffer> buffer = m_deviceManager.GetDevice().allocateCommandBuffers(
             cmdBufferAllocateInfo, m_dispatcher);
-        vk::PoolFree<vk::Device, vk::CommandPool, VulkanFunctionDispatcher> deleter(
+        vk::PoolFree<vk::Device, vk::CommandPool, VulkanDispatcher> deleter(
             m_deviceManager.GetDevice(), m_graphicsCommandPool.get(), m_dispatcher);
         resources.commandBuffer = VulkanUtils::CommandBufferHandle(buffer.front(), deleter);
 
@@ -211,7 +211,7 @@ VulkanSwapChainRenderer::CreateRenderingResources(uint32_t numVirtualFrames)
 }
 
 bool
-VulkanSwapChainRenderer::CreateSwapChain()
+SwapChainRenderer::CreateSwapChain()
 {
     m_canDraw = false;
 
@@ -389,7 +389,7 @@ VulkanSwapChainRenderer::CreateSwapChain()
 }
 
 bool
-VulkanSwapChainRenderer::UpdateSwapChain()
+SwapChainRenderer::UpdateSwapChain()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
     m_deviceManager.WaitDevice();
@@ -401,7 +401,7 @@ VulkanSwapChainRenderer::UpdateSwapChain()
 }
 
 void 
-VulkanSwapChainRenderer::RecordPipelineCommands(const PipelineArray& pipelines, const VulkanUtils::FrameUpdateInfo& frameInfo)
+SwapChainRenderer::RecordPipelineCommands(const PipelineArray& pipelines, const VulkanUtils::FrameUpdateInfo& frameInfo)
 {
     // begin recording commands
     vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -460,7 +460,7 @@ VulkanSwapChainRenderer::RecordPipelineCommands(const PipelineArray& pipelines, 
         frameInfo.drawCmdBuffer.setScissor(0, scissor, m_dispatcher);
     }
 
-    for (const VulkanGraphicsPipelineBase* pipeline : pipelines)
+    for (const PipelineBase* pipeline : pipelines)
     {
         HEPHAESTUS_LOG_ASSERT(pipeline != nullptr, "Invalid pipeline");
         pipeline->RecordDrawCommands(frameInfo);

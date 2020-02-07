@@ -3,7 +3,7 @@
 #include <common/Camera.h>
 #include <common/CommonUtils.h>
 #include <hephaestus/VulkanDeviceManager.h>
-#include <hephaestus/VulkanMeshGraphicsPipeline.h>
+#include <hephaestus/TriMeshPipeline.h>
 #include "SimpleWindow.h"
 #include "WindowRenderer.h"
 
@@ -149,7 +149,7 @@ public:
     {
         using namespace hephaestus;
 
-        VulkanSwapChainRenderer::RenderStats stats;
+        SwapChainRenderer::RenderStats stats;
         if (!m_renderer.Draw(dtMsecs, stats))
             return false;
 
@@ -234,7 +234,7 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 // Vulkan lib helpers
-hephaestus::VulkanFunctionDispatcher::ModuleType vulkanLib;
+hephaestus::VulkanDispatcher::ModuleType vulkanLib;
 static void UnloadVulkanLib()
 {
 #ifdef HEPHAESTUS_PLATFORM_WIN32
@@ -284,7 +284,7 @@ int main(/*int argc, char** argv*/)
         createInfo.startY = 20u;
         CHECK_EXIT_MSG(window.Create(createInfo), "Failed to create Window");
 
-        hephaestus::VulkanFunctionDispatcher dispatcher;
+        hephaestus::VulkanDispatcher dispatcher;
 
         // Imgui setup
         IMGUI_CHECKVERSION();
@@ -344,12 +344,12 @@ int main(/*int argc, char** argv*/)
             // dummy texture
             std::vector<char> textureData(16, '\xfa');
             hephaestus::MeshUtils::ImageDesc textureDesc = { 2, 2, 4 };
-            hephaestus::VulkanGraphicsPipelineBase::ShaderParams shaderParams(shaderDB);
+            hephaestus::PipelineBase::ShaderParams shaderParams(shaderDB);
             {
                 shaderParams.vertexShaderIndex = ShaderType::eSHADER_VERTEX_PNTC;
                 shaderParams.fragmentShaderIndex = ShaderType::eSHADER_FRAGMENT_PhongTexture;
             }
-            hephaestus::VulkanMeshGraphicsPipeline::SetupParams params;
+            hephaestus::TriMeshPipeline::SetupParams params;
             params.enableFaceCulling = false;
             CHECK_EXIT_MSG(hephaestus::MeshUtils::SetupPipelineForMesh(
                 mesh, textureData, textureDesc, renderer.GetCmdBuffer(), renderer.GetRenderPass(), 
@@ -375,7 +375,7 @@ int main(/*int argc, char** argv*/)
             // add a red rectangle around the bounding box of the mesh
             hephaestus::Vector3 center = bbox.ComputeCenter();
             constexpr float color[3] = { 1.f, 0.f, 0.f };
-            std::vector<hephaestus::VulkanPrimitiveGraphicsPipeline::VertexData> primData =
+            std::vector<hephaestus::PrimitivesPipeline::VertexData> primData =
             {
                 { bbox.min.x, bbox.min.y, center.z, color[0], color[1], color[2] },
                 { bbox.max.x, bbox.min.y, center.z, color[0], color[1], color[2] },
@@ -384,7 +384,7 @@ int main(/*int argc, char** argv*/)
                 { bbox.min.x, bbox.min.y, center.z, color[0], color[1], color[2] },
             };
 
-            hephaestus::VulkanGraphicsPipelineBase::ShaderParams shaderParams(shaderDB);
+            hephaestus::PipelineBase::ShaderParams shaderParams(shaderDB);
             {
                 shaderParams.vertexShaderIndex = ShaderType::eSHADER_VERTEX_Lines;
                 shaderParams.fragmentShaderIndex = ShaderType::eSHADER_FRAGMENT_Lines;

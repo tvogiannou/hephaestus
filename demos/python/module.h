@@ -5,9 +5,9 @@
 
 #include <common/CommonUtils.h>
 #include <common/MeshUtils.h>
-#include <hephaestus/VulkanMeshGraphicsPipeline.h>
+#include <hephaestus/TriMeshPipeline.h>
 #include <hephaestus/VulkanPlatformConfig.h>
-#include <hephaestus/VulkanHeadlessRenderer.h>
+#include <hephaestus/HeadlessRenderer.h>
 
 #include <tuple>
 #include <vector>
@@ -25,7 +25,7 @@ struct Utils
             hephaestus::MeshUtils::TriMesh& mesh);
 
     static std::tuple<pybind11::array_t<uint8_t>, uint32_t, uint32_t, uint32_t>
-        ExtractRendererDstImage(const hephaestus::VulkanHeadlessRenderer& renderer);
+        ExtractRendererDstImage(const hephaestus::HeadlessRenderer& renderer);
 };
 
 struct HEPHAESTUS_BINDINGS_Vec4

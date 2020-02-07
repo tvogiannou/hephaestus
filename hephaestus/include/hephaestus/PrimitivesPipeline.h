@@ -2,15 +2,15 @@
 
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanDeviceManager.h>
-#include <hephaestus/VulkanFunctionDispatcher.h>
-#include <hephaestus/VulkanGraphicsPipelineBase.h>
+#include <hephaestus/VulkanDispatcher.h>
+#include <hephaestus/PipelineBase.h>
 
 
 namespace hephaestus
 {
 
 // Graphics pipeline that renders primitive types (points & lines)
-class VulkanPrimitiveGraphicsPipeline : public VulkanGraphicsPipelineBase
+class PrimitivesPipeline : public PipelineBase
 {
 public:
 
@@ -23,15 +23,15 @@ public:
     };
 
 public:
-    explicit VulkanPrimitiveGraphicsPipeline(const VulkanDeviceManager& _deviceManager) :
-		VulkanGraphicsPipelineBase(_deviceManager)
+    explicit PrimitivesPipeline(const VulkanDeviceManager& _deviceManager) :
+		PipelineBase(_deviceManager)
 	{}
 
-	~VulkanPrimitiveGraphicsPipeline() { Clear(); }
+	~PrimitivesPipeline() { Clear(); }
 	void Clear();
 
     // render data setup
-	bool SetupPipeline(vk::RenderPass renderPass, const VulkanGraphicsPipelineBase::ShaderParams& shaderParams);
+	bool SetupPipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
 
     // set line data
     bool AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo);
@@ -41,7 +41,7 @@ public:
 
 private:
 
-    bool CreatePipeline(vk::RenderPass renderPass, const VulkanGraphicsPipelineBase::ShaderParams& shaderParams);
+    bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
 
 	// rendering pipeline setup
     VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;

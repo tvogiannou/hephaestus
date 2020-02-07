@@ -1,4 +1,4 @@
-#include <hephaestus/VulkanMeshGraphicsPipeline.h>
+#include <hephaestus/TriMeshPipeline.h>
 
 #include <hephaestus/Log.h>
 
@@ -9,7 +9,7 @@ namespace hephaestus
 {
 
 void 
-VulkanMeshGraphicsPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const
+TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
     // bind pipeline
     frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanGraphicsPipeline.get(), m_dispatcher);
@@ -48,9 +48,9 @@ VulkanMeshGraphicsPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInf
 }
 
 bool 
-VulkanMeshGraphicsPipeline::SetupPipeline(vk::RenderPass renderPass, 
-    const VulkanGraphicsPipelineBase::ShaderParams& shaderParams,
-    const VulkanMeshGraphicsPipeline::SetupParams& params)
+TriMeshPipeline::SetupPipeline(vk::RenderPass renderPass, 
+    const PipelineBase::ShaderParams& shaderParams,
+    const TriMeshPipeline::SetupParams& params)
 {
     if (!SetupDescriptorSets())
         return false;
@@ -62,7 +62,7 @@ VulkanMeshGraphicsPipeline::SetupPipeline(vk::RenderPass renderPass,
 }
 
 bool 
-VulkanMeshGraphicsPipeline::SetupDescriptorSets()
+TriMeshPipeline::SetupDescriptorSets()
 {
     if (!m_descriptorPool)
         return false;
@@ -97,7 +97,7 @@ VulkanMeshGraphicsPipeline::SetupDescriptorSets()
 }
 
 void 
-VulkanMeshGraphicsPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
+TriMeshPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
     const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo)
 {
     // allocate descriptor set
@@ -105,7 +105,7 @@ VulkanMeshGraphicsPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& d
         vk::DescriptorSetAllocateInfo allocInfo(
             m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
         std::vector<vk::DescriptorSet> descSet = m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo, m_dispatcher);
-        vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanFunctionDispatcher> deleter(
+        vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
             m_deviceManager.GetDevice(), m_descriptorPool.get(), m_dispatcher);
         descSetInfo.handle = VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
     }
@@ -148,7 +148,7 @@ VulkanMeshGraphicsPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& d
 }
 
 void
-VulkanMeshGraphicsPipeline::CreatePipelineLayout()
+TriMeshPipeline::CreatePipelineLayout()
 {
     HEPHAESTUS_LOG_ASSERT(m_descriptorSetLayout, "Descriptor set layout is null");
 
@@ -161,9 +161,9 @@ VulkanMeshGraphicsPipeline::CreatePipelineLayout()
 }
 
 bool
-VulkanMeshGraphicsPipeline::CreatePipeline(vk::RenderPass renderPass, 
-    const VulkanGraphicsPipelineBase::ShaderParams& shaderParams,
-    const VulkanMeshGraphicsPipeline::SetupParams& params)
+TriMeshPipeline::CreatePipeline(vk::RenderPass renderPass, 
+    const PipelineBase::ShaderParams& shaderParams,
+    const TriMeshPipeline::SetupParams& params)
 {
     HEPHAESTUS_LOG_ASSERT(renderPass, "No available render pass");
 
@@ -321,7 +321,7 @@ VulkanMeshGraphicsPipeline::CreatePipeline(vk::RenderPass renderPass,
 }
 
 bool 
-VulkanMeshGraphicsPipeline::SubMeshSetTextureData(SubMeshIDType subMeshId, 
+TriMeshPipeline::SubMeshSetTextureData(SubMeshIDType subMeshId, 
     const VulkanUtils::TextureUpdateInfo& textureUpdateInfo)
 {
     HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
@@ -331,7 +331,7 @@ VulkanMeshGraphicsPipeline::SubMeshSetTextureData(SubMeshIDType subMeshId,
 }
 
 void 
-VulkanMeshGraphicsPipeline::SubMeshSetVisible(uint32_t subMeshId, bool visible)
+TriMeshPipeline::SubMeshSetVisible(uint32_t subMeshId, bool visible)
 {
     HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
 
@@ -340,7 +340,7 @@ VulkanMeshGraphicsPipeline::SubMeshSetVisible(uint32_t subMeshId, bool visible)
 }
 
 void 
-VulkanMeshGraphicsPipeline::Clear()
+TriMeshPipeline::Clear()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
     m_deviceManager.WaitDevice();
@@ -358,19 +358,19 @@ VulkanMeshGraphicsPipeline::Clear()
 
     m_pipelineLayout.reset(nullptr);
     m_vulkanGraphicsPipeline.reset(nullptr);
-    VulkanGraphicsPipelineBase::Clear();
+    PipelineBase::Clear();
 }
 
 bool 
-VulkanMeshGraphicsPipeline::CreateIndexBuffer(uint32_t size)
+TriMeshPipeline::CreateIndexBuffer(uint32_t size)
 {
     return VulkanUtils::CreateBuffer(m_deviceManager, size,
         vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal, m_indexBufferInfo);
 }
 
-VulkanMeshGraphicsPipeline::SubMeshIDType 
-VulkanMeshGraphicsPipeline::SubMeshCreate()
+TriMeshPipeline::SubMeshIDType 
+TriMeshPipeline::SubMeshCreate()
 {
     m_subMeshes.push_back({});
     m_subMeshes.back().vertexOffset = m_vertexBufferCurSize;    // create always pointing at currently 
@@ -379,7 +379,7 @@ VulkanMeshGraphicsPipeline::SubMeshCreate()
 }
 
 bool 
-VulkanMeshGraphicsPipeline::SubMeshCreateTexture(SubMeshIDType subMeshId, uint32_t width, uint32_t height)
+TriMeshPipeline::SubMeshCreateTexture(SubMeshIDType subMeshId, uint32_t width, uint32_t height)
 {
     HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
 
@@ -388,7 +388,7 @@ VulkanMeshGraphicsPipeline::SubMeshCreateTexture(SubMeshIDType subMeshId, uint32
 }
 
 bool
-VulkanMeshGraphicsPipeline::SubMeshSetIndexData(SubMeshIDType subMeshId, 
+TriMeshPipeline::SubMeshSetIndexData(SubMeshIDType subMeshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
     HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
@@ -407,7 +407,7 @@ VulkanMeshGraphicsPipeline::SubMeshSetIndexData(SubMeshIDType subMeshId,
 }
 
 bool 
-VulkanMeshGraphicsPipeline::SubMeshSetVertexData(SubMeshIDType subMeshId, 
+TriMeshPipeline::SubMeshSetVertexData(SubMeshIDType subMeshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)            
 {
     HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
@@ -425,7 +425,7 @@ VulkanMeshGraphicsPipeline::SubMeshSetVertexData(SubMeshIDType subMeshId,
 }
 
 bool 
-VulkanMeshGraphicsPipeline::SubMeshUpdateVertexData(SubMeshIDType subMeshId, 
+TriMeshPipeline::SubMeshUpdateVertexData(SubMeshIDType subMeshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
     HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");

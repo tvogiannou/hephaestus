@@ -2,7 +2,7 @@
 
 #include <hephaestus/Log.h>
 #include <hephaestus/Platform.h>
-#include <hephaestus/VulkanFunctionDispatcher.h>
+#include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanPlatformConfig.h>
 
 #include <vector>
@@ -16,7 +16,7 @@ namespace hephaestus
 bool 
 VulkanValidate::checkInstanceValidationLayerSupport(
     const std::vector<const char*>& validationLayers, 
-    const VulkanFunctionDispatcher& dispatcher)
+    const VulkanDispatcher& dispatcher)
 {
     std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties(dispatcher);
 
@@ -42,7 +42,7 @@ VulkanValidate::checkInstanceValidationLayerSupport(
 bool 
 VulkanValidate::checkInstanceRequiredExtensions(
     const std::vector<const char*>& instanceExtensions, 
-    const VulkanFunctionDispatcher& dispatcher)
+    const VulkanDispatcher& dispatcher)
 {
     std::vector<vk::ExtensionProperties> instanceExtensionProperties = 
                         vk::enumerateInstanceExtensionProperties(nullptr, dispatcher);
@@ -74,7 +74,7 @@ bool
 VulkanValidate::checkPhysicalDeviceRequiredExtensions(
     const std::vector<const char*>& deviceExtensions,
     const vk::PhysicalDevice& physicalDevice,
-    const VulkanFunctionDispatcher& dispatcher)
+    const VulkanDispatcher& dispatcher)
 {
     HEPHAESTUS_LOG_ASSERT(physicalDevice, "No Vulkan physical device available");
     
@@ -107,7 +107,7 @@ VulkanValidate::checkPhysicalDeviceRequiredExtensions(
 bool 
 VulkanValidate::checkPhysicalDevicePropertiesAndFeatures(
     const vk::PhysicalDevice& physicalDevice, 
-    const VulkanFunctionDispatcher& dispatcher)
+    const VulkanDispatcher& dispatcher)
 {
     HEPHAESTUS_LOG_ASSERT(physicalDevice, "No Vulkan physical device available");
 

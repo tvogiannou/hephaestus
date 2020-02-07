@@ -2,23 +2,23 @@
 
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanDeviceManager.h>
-#include <hephaestus/VulkanRendererBase.h>
+#include <hephaestus/RendererBase.h>
 #include <hephaestus/VulkanUtils.h>
 
 
 namespace hephaestus
 {
-class VulkanGraphicsPipelineBase;
+class PipelineBase;
 
-class VulkanHeadlessRenderer : public VulkanRendererBase
+class HeadlessRenderer : public RendererBase
 {
 public:
 
-    VulkanHeadlessRenderer(const VulkanDeviceManager& deviceManager) :
-        VulkanRendererBase(deviceManager)
+    HeadlessRenderer(const VulkanDeviceManager& deviceManager) :
+        RendererBase(deviceManager)
     {}
 
-    struct InitInfo : public VulkanRendererBase::InitInfo
+    struct InitInfo : public RendererBase::InitInfo
     {
         uint32_t width = 1024u;
         uint32_t height = 1024u;
@@ -26,7 +26,7 @@ public:
     bool Init(const InitInfo& info);
     void Clear();
 
-    bool RenderPipeline(const VulkanGraphicsPipelineBase& pipeline) const;
+    bool RenderPipeline(const PipelineBase& pipeline) const;
 
     const vk::Extent2D& GetExtent() const { return m_extent; }
 

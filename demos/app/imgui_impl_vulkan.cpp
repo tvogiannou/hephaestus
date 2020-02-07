@@ -33,7 +33,7 @@
 #include <stdio.h>
 
 
-static const hephaestus::VulkanFunctionDispatcher* g_dispatcher = nullptr;
+static const hephaestus::VulkanDispatcher* g_dispatcher = nullptr;
 
 
 

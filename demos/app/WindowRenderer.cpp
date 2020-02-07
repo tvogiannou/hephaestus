@@ -5,7 +5,7 @@
 #include <common/Camera.h>
 #include <common/CommonUtils.h>
 #include <common/Matrix4.h>
-#include <hephaestus/VulkanGraphicsPipelineBase.h>
+#include <hephaestus/PipelineBase.h>
 #include <hephaestus/VulkanPlatformConfig.h>
 
 
@@ -115,12 +115,12 @@ VulkanWindowRenderer::OnWindowSizeChanged()
 }
 
 bool
-VulkanWindowRenderer::Draw(float /*dtMsecs*/, VulkanSwapChainRenderer::RenderStats& stats)
+VulkanWindowRenderer::Draw(float /*dtMsecs*/, SwapChainRenderer::RenderStats& stats)
 {
-    VulkanSwapChainRenderer::RenderStatus status = RenderPipelines(
+    SwapChainRenderer::RenderStatus status = RenderPipelines(
         { &m_graphicsPipeline, &m_primitivePipeline, &m_imguiPipeline }, stats);
 
-    if (status == VulkanSwapChainRenderer::RenderStatus::eRENDER_STATUS_RESIZE)
+    if (status == SwapChainRenderer::RenderStatus::eRENDER_STATUS_RESIZE)
         OnWindowSizeChanged();
     else if (status != RenderStatus::eRENDER_STATUS_COMPLETE)
         return false;
@@ -147,7 +147,7 @@ void VulkanWindowRenderer::Clear()
 
     ImGui_ImplVulkan_Shutdown();
 
-    VulkanSwapChainRenderer::Clear();
+    SwapChainRenderer::Clear();
 }
 
 bool 
@@ -155,8 +155,8 @@ VulkanWindowRenderer::Init()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
 
-    VulkanSwapChainRenderer::InitInfo baseInfo = {};
-    if (!VulkanSwapChainRenderer::Init(baseInfo))
+    SwapChainRenderer::InitInfo baseInfo = {};
+    if (!SwapChainRenderer::Init(baseInfo))
         return false;
 
     m_imguiPipeline.SetupPipeline(m_renderPass.get(), m_graphicsCommandPool.get(), m_cmdBuffer.get());

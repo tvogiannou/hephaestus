@@ -1,4 +1,4 @@
-#include <hephaestus/VulkanRendererBase.h>
+#include <hephaestus/RendererBase.h>
 
 #include <hephaestus/Log.h>
 
@@ -7,7 +7,7 @@ namespace hephaestus
 {
 
 bool 
-VulkanRendererBase::Init(const InitInfo& info)
+RendererBase::Init(const InitInfo& info)
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
     m_deviceManager.WaitDevice();
@@ -30,7 +30,7 @@ VulkanRendererBase::Init(const InitInfo& info)
             m_graphicsCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
         std::vector<vk::CommandBuffer> buffer = m_deviceManager.GetDevice().allocateCommandBuffers(
             cmdBufferAllocateInfo, m_deviceManager.GetDispatcher());
-        vk::PoolFree<vk::Device, vk::CommandPool, VulkanFunctionDispatcher> deleter(
+        vk::PoolFree<vk::Device, vk::CommandPool, VulkanDispatcher> deleter(
             m_deviceManager.GetDevice(), m_graphicsCommandPool.get(), m_deviceManager.GetDispatcher());
         m_cmdBuffer = VulkanUtils::CommandBufferHandle(buffer.front(), deleter);
     }
@@ -43,7 +43,7 @@ VulkanRendererBase::Init(const InitInfo& info)
 }
 
 void 
-VulkanRendererBase::Clear()
+RendererBase::Clear()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
     m_deviceManager.WaitDevice();

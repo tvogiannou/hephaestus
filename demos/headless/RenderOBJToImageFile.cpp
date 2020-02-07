@@ -6,8 +6,8 @@
 #include <common/Matrix4.h>
 #include <hephaestus/Log.h>
 #include <hephaestus/Platform.h>
-#include <hephaestus/VulkanMeshGraphicsPipeline.h>
-#include <hephaestus/VulkanHeadlessRenderer.h>
+#include <hephaestus/TriMeshPipeline.h>
+#include <hephaestus/HeadlessRenderer.h>
 #include <hephaestus/VulkanPlatformConfig.h>
 
 #include <cstdlib>
@@ -25,7 +25,7 @@ enum ShaderType
 };
 
 
-hephaestus::VulkanFunctionDispatcher::ModuleType s_vulkanLib = (hephaestus::VulkanFunctionDispatcher::ModuleType)nullptr;
+hephaestus::VulkanDispatcher::ModuleType s_vulkanLib = (hephaestus::VulkanDispatcher::ModuleType)nullptr;
 static void UnloadVulkanLib()
 {
 #ifdef HEPHAESTUS_PLATFORM_WIN32
@@ -57,7 +57,7 @@ int main()
     }
 
     // create the dispatcher for the loaded Vulkan functions
-    hephaestus::VulkanFunctionDispatcher dispatcher;
+    hephaestus::VulkanDispatcher dispatcher;
     {
         dispatcher.InitFromLibrary(s_vulkanLib);
         dispatcher.LoadGlobalFunctions();
@@ -78,9 +78,9 @@ int main()
     constexpr uint32_t outHeight = 1024u;
 
     // init headless renderer
-    hephaestus::VulkanHeadlessRenderer renderer(deviceManager);
+    hephaestus::HeadlessRenderer renderer(deviceManager);
     {
-        hephaestus::VulkanHeadlessRenderer::InitInfo info = {};
+        hephaestus::HeadlessRenderer::InitInfo info = {};
         info.width = outWidth;
         info.height = outHeight;
         CHECK_EXIT_MSG(renderer.Init(info),"Failed to init headless renderer");
@@ -101,7 +101,7 @@ int main()
     }
 
     // load data into pipeline
-    hephaestus::VulkanMeshGraphicsPipeline meshPipeline(renderer.GetDeviceManager());
+    hephaestus::TriMeshPipeline meshPipeline(renderer.GetDeviceManager());
     {
         //const char* filename = "../data/bunny.obj";
         const char* filename = "../data/teapot.obj";
@@ -117,12 +117,12 @@ int main()
         std::vector<char> textureData(16, '\xfa');
         hephaestus::MeshUtils::ImageDesc textureDesc = { 2, 2, 4 };
         // shaders to be used by the pipeline, need to match vertex format
-        hephaestus::VulkanGraphicsPipelineBase::ShaderParams shaderParams(shaderDB);
+        hephaestus::PipelineBase::ShaderParams shaderParams(shaderDB);
         {
             shaderParams.vertexShaderIndex = ShaderType::eSHADER_VERTEX_PNTC;
             shaderParams.fragmentShaderIndex = ShaderType::eSHADER_FRAGMENT_PhongTexture;
         }
-        hephaestus::VulkanMeshGraphicsPipeline::SetupParams params = {}; // default pipeline params
+        hephaestus::TriMeshPipeline::SetupParams params = {}; // default pipeline params
         CHECK_EXIT_MSG(hephaestus::MeshUtils::SetupPipelineForMesh(
             mesh, textureData, textureDesc, renderer.GetCmdBuffer(), renderer.GetRenderPass(), 
             shaderParams, params, meshPipeline), 

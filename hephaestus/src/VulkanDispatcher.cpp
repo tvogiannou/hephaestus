@@ -1,5 +1,5 @@
 
-#include <hephaestus/VulkanFunctionDispatcher.h>
+#include <hephaestus/VulkanDispatcher.h>
 
 #include <hephaestus/Log.h>
 
@@ -11,7 +11,7 @@ namespace hephaestus
 {
 
 void 
-VulkanFunctionDispatcher::InitFromLibrary(ModuleType vulkanLibrary)
+VulkanDispatcher::InitFromLibrary(ModuleType vulkanLibrary)
 {
 	HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr == 0, "vkGetInstanceProcAddr should not be set");
 
@@ -29,7 +29,7 @@ VulkanFunctionDispatcher::InitFromLibrary(ModuleType vulkanLibrary)
 }
 
 void 
-VulkanFunctionDispatcher::LoadGlobalFunctions()
+VulkanDispatcher::LoadGlobalFunctions()
 {
 	HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr, "Dispatcher has not been initialized");
 
@@ -40,7 +40,7 @@ VulkanFunctionDispatcher::LoadGlobalFunctions()
 }
 
 void 
-VulkanFunctionDispatcher::LoadInstanceFunctions(const vk::Instance& instance)
+VulkanDispatcher::LoadInstanceFunctions(const vk::Instance& instance)
 {
 	HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr, "Dispatcher has not been initialized");
 
@@ -73,7 +73,7 @@ VulkanFunctionDispatcher::LoadInstanceFunctions(const vk::Instance& instance)
 }
 
 void 
-VulkanFunctionDispatcher::LoadDeviceFunctions(const vk::Device& device)
+VulkanDispatcher::LoadDeviceFunctions(const vk::Device& device)
 {
 	HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr, "Dispatcher has not been initialized");
 

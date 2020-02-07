@@ -8,26 +8,26 @@ endif()
 # set sources
 set(HEPHAESTUS_SOURCE_FILES 
     ${CMAKE_CURRENT_LIST_DIR}/src/VulkanDeviceManager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanFunctionDispatcher.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanGraphicsPipelineBase.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanHeadlessRenderer.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanMeshGraphicsPipeline.cpp 
-    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanPrimitiveGraphicsPipeline.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanRendererBase.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanDispatcher.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/PipelineBase.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/HeadlessRenderer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/TriMeshPipeline.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/src/PrimitivesPipeline.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/RendererBase.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/VulkanValidate.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/VulkanUtils.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/VulkanSwapChainRenderer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/SwapChainRenderer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/Log.cpp
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanDeviceManager.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanFunctionDispatcher.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanGraphicsPipelineBase.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanHeadlessRenderer.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanMeshGraphicsPipeline.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanPrimitiveGraphicsPipeline.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanRendererBase.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanDispatcher.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/PipelineBase.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/HeadlessRenderer.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/TriMeshPipeline.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/PrimitivesPipeline.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/RendererBase.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanValidate.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanUtils.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanSwapChainRenderer.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/SwapChainRenderer.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanPlatformConfig.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/Platform.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/Log.h)
