@@ -40,7 +40,7 @@ target_link_libraries(headless-example PRIVATE hephaestus common ${CMAKE_DL_LIBS
 # non Android targets
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android")
     # real time app demo
-    include(${CMAKE_CURRENT_LIST_DIR}/app/app.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/previewer-app/previewer-app.cmake)
 
     # python bindings
     if(HEPHAESTUS_PYTHON_BINDINGS)

@@ -26,5 +26,5 @@ add_subdirectory(	"${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/glfw-3.3"
 
 add_subdirectory("${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/imgui-1.69-src" ${CMAKE_CURRENT_BINARY_DIR}/imgui-build)
 
-add_executable(app ${APP_SOURCE_FILES})
-target_link_libraries(app PUBLIC hephaestus common glfw ImGui ${CMAKE_DL_LIBS})
+add_executable(previewer-app ${APP_SOURCE_FILES})
+target_link_libraries(previewer-app PUBLIC hephaestus common glfw ImGui ${CMAKE_DL_LIBS})
