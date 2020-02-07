@@ -17,17 +17,17 @@ class VulkanValidate
 {
 public:
 
-	static bool checkInstanceValidationLayerSupport(
+	static bool CheckInstanceValidationLayerSupport(
 		const std::vector<const char*>& validationLayers, 
 		const hephaestus::VulkanDispatcher& dispatcher);
-	static bool checkInstanceRequiredExtensions(
+	static bool CheckInstanceRequiredExtensions(
 		const std::vector<const char*>& instanceExtensions, 
 		const hephaestus::VulkanDispatcher& dispatcher);
-	static bool checkPhysicalDeviceRequiredExtensions(
+	static bool CheckPhysicalDeviceRequiredExtensions(
 		const std::vector<const char*>& deviceExtensions, 
 		const vk::PhysicalDevice& physicalDevice,
 		const hephaestus::VulkanDispatcher& dispatcher);
-	static bool checkPhysicalDevicePropertiesAndFeatures(
+	static bool CheckPhysicalDevicePropertiesAndFeatures(
 		const vk::PhysicalDevice& physicalDevice,
 		const hephaestus::VulkanDispatcher& dispatcher);
 };

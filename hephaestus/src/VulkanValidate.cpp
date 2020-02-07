@@ -14,7 +14,7 @@ namespace hephaestus
 
 // static
 bool 
-VulkanValidate::checkInstanceValidationLayerSupport(
+VulkanValidate::CheckInstanceValidationLayerSupport(
     const std::vector<const char*>& validationLayers, 
     const VulkanDispatcher& dispatcher)
 {
@@ -40,7 +40,7 @@ VulkanValidate::checkInstanceValidationLayerSupport(
 
 //static 
 bool 
-VulkanValidate::checkInstanceRequiredExtensions(
+VulkanValidate::CheckInstanceRequiredExtensions(
     const std::vector<const char*>& instanceExtensions, 
     const VulkanDispatcher& dispatcher)
 {
@@ -71,7 +71,7 @@ VulkanValidate::checkInstanceRequiredExtensions(
 
 //static 
 bool 
-VulkanValidate::checkPhysicalDeviceRequiredExtensions(
+VulkanValidate::CheckPhysicalDeviceRequiredExtensions(
     const std::vector<const char*>& deviceExtensions,
     const vk::PhysicalDevice& physicalDevice,
     const VulkanDispatcher& dispatcher)
@@ -105,7 +105,7 @@ VulkanValidate::checkPhysicalDeviceRequiredExtensions(
 
 //static 
 bool 
-VulkanValidate::checkPhysicalDevicePropertiesAndFeatures(
+VulkanValidate::CheckPhysicalDevicePropertiesAndFeatures(
     const vk::PhysicalDevice& physicalDevice, 
     const VulkanDispatcher& dispatcher)
 {

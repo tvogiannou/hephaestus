@@ -67,7 +67,7 @@ VulkanDeviceManager::CreateInstance(bool enableValidationLayers)
     
     const std::vector<const char*>& instanceExtensions =
         GetInstanceRequiredExtensions(enableValidationLayers);
-    HEPHAESTUS_LOG_ASSERT(VulkanValidate::checkInstanceRequiredExtensions(instanceExtensions, m_dispatcher), 
+    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckInstanceRequiredExtensions(instanceExtensions, m_dispatcher), 
         "No support for required Vulkan extensions");
 
     // TODO: expose names as argument
@@ -77,7 +77,7 @@ VulkanDeviceManager::CreateInstance(bool enableValidationLayers)
     creationInfo.setPpEnabledExtensionNames(instanceExtensions.data());
     if (enableValidationLayers)
     {
-        HEPHAESTUS_LOG_ASSERT(VulkanValidate::checkInstanceValidationLayerSupport(validationLayers, m_dispatcher),
+        HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckInstanceValidationLayerSupport(validationLayers, m_dispatcher),
             "No support for required Vulkan layer extensions");
         creationInfo.setEnabledLayerCount((uint32_t)validationLayers.size());
         creationInfo.setPpEnabledLayerNames(validationLayers.data());
@@ -120,10 +120,10 @@ VulkanDeviceManager::CreateDevice(bool createPresentQueue /*= true*/)
     // TODO: pick the physical context.device with the desired extensions
     m_physicalDevice = physicalDevices[0];
 
-    HEPHAESTUS_LOG_ASSERT(VulkanValidate::checkPhysicalDevicePropertiesAndFeatures(m_physicalDevice, m_dispatcher),
+    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckPhysicalDevicePropertiesAndFeatures(m_physicalDevice, m_dispatcher),
         "No support for Vulkan physical device required properties and features");
     const std::vector<const char*>& deviceExtensions = GetDeviceRequiredExtensions();
-    HEPHAESTUS_LOG_ASSERT(VulkanValidate::checkPhysicalDeviceRequiredExtensions(deviceExtensions, m_physicalDevice, m_dispatcher),
+    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckPhysicalDeviceRequiredExtensions(deviceExtensions, m_physicalDevice, m_dispatcher),
         "No support for Vulkan physical device required extensions");
 
     if (!SetupQueueFamilies(createPresentQueue))
