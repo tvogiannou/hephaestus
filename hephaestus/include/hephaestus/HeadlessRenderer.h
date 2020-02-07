@@ -25,11 +25,31 @@ public:
     };
     bool Init(const InitInfo& info);
     void Clear();
-
-    bool RenderPipeline(const PipelineBase& pipeline) const;
-
     const vk::Extent2D& GetExtent() const { return m_extent; }
 
+
+    bool BeginRenderFrame(VulkanUtils::FrameUpdateInfo& frameInfo) const;
+    bool EndRenderFrame(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
+
+    // util to render single pipeline
+    template<typename PipelineType>
+    bool RenderPipeline(const PipelineType& pipeline) const
+    {
+        VulkanUtils::FrameUpdateInfo frameInfo;
+        if (!BeginRenderFrame(frameInfo))
+            return false;
+
+        pipeline.RecordDrawCommands(frameInfo);
+
+        if (!EndRenderFrame(frameInfo))
+            return false;
+
+        CopyRenderFrame();
+
+        return true;
+    }
+
+    void CopyRenderFrame() const;
     bool GetDstImageInfo(uint32_t& numChannels, uint32_t& width, uint32_t& height) const;
     bool GetDstImageData(char* data) const;
 

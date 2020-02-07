@@ -131,200 +131,170 @@ HeadlessRenderer::Clear()
 }
 
 bool 
-HeadlessRenderer::RenderPipeline(const PipelineBase& pipeline) const
+HeadlessRenderer::BeginRenderFrame(VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
-    // render the pipeline
+    m_deviceManager.WaitDevice();
+
+    // set frame info
     {
-        m_deviceManager.WaitDevice();
-
-        VulkanUtils::FrameUpdateInfo frameInfo;
-        {
-            frameInfo.drawCmdBuffer = m_cmdBuffer.get();
-            frameInfo.framebuffer = m_framebuffer.get();
-            frameInfo.extent = m_extent;
-            frameInfo.image = m_frameImageInfo.imageHandle.get();
-            frameInfo.view = m_frameImageInfo.view.get();
-            frameInfo.renderPass = m_renderPass.get();
-        }
-
-        // begin recording commands
-        vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-        frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo, m_deviceManager.GetDispatcher());
-
-        // begin the render pass
-        std::array<float, 4> colorClearValues = m_colorClearValues;
-        std::array<vk::ClearValue, 2> clearValues = {};
-        clearValues[0].color = colorClearValues;
-        clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0u);
-        vk::Rect2D renderArea = { {0, 0}, { frameInfo.extent } };
-        vk::RenderPassBeginInfo renderPassBeginInfo(
-            frameInfo.renderPass,
-            frameInfo.framebuffer,
-            renderArea,
-            (uint32_t)clearValues.size(), clearValues.data());
-        frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline, m_deviceManager.GetDispatcher());
-
-        // update viewport and scissor
-        {
-            vk::Viewport viewport = {
-                0.f, 0.f,
-                (float)frameInfo.extent.width,
-                (float)frameInfo.extent.height,
-                0.f, 1.f
-            };
-            vk::Rect2D scissor = {
-                { 0,0 },
-                {
-                    frameInfo.extent.width,
-                    frameInfo.extent.height
-                }
-            };
-            frameInfo.drawCmdBuffer.setViewport(0, viewport, m_deviceManager.GetDispatcher());
-            frameInfo.drawCmdBuffer.setScissor(0, scissor, m_deviceManager.GetDispatcher());
-        }
-
-        pipeline.RecordDrawCommands(frameInfo);
-
-        frameInfo.drawCmdBuffer.endRenderPass(m_deviceManager.GetDispatcher());
-
-        frameInfo.drawCmdBuffer.end(m_deviceManager.GetDispatcher());
-
-        // submit graphics queue
-        {
-//             VkSubmitInfo submitInfo = vks::initializers::submitInfo();
-//             submitInfo.commandBufferCount = 1;
-//             submitInfo.pCommandBuffers = &cmdBuffer;
-//             VkFenceCreateInfo fenceInfo = vks::initializers::fenceCreateInfo();
-//             VkFence fence;
-//             VK_CHECK_RESULT(vkCreateFence(device, &fenceInfo, nullptr, &fence));
-//             VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, fence));
-//             VK_CHECK_RESULT(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
-//             vkDestroyFence(device, fence, nullptr);
-
-            vk::FenceCreateInfo fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
-            VulkanUtils::FenceHandle fence = m_deviceManager.GetDevice().createFenceUnique(
-                fenceCreateInfo, nullptr, m_deviceManager.GetDispatcher());
-            m_deviceManager.GetDevice().resetFences(fence.get(), m_deviceManager.GetDispatcher());
-
-            //vk::PipelineStageFlags waitDstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-            vk::SubmitInfo submitInfo(
-                0, nullptr,
-                nullptr,
-                1, &m_cmdBuffer.get(),
-                0, nullptr);
-            m_deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, fence.get(), m_deviceManager.GetDispatcher());
-            //m_deviceManager.GetDevice().waitForFences(fence.get(), VK_TRUE, UINT64_MAX, m_deviceManager.GetDispatcher());
-            if (m_deviceManager.GetDevice().waitForFences(
-                fence.get(), VK_TRUE, UINT64_MAX, m_deviceManager.GetDispatcher()) != vk::Result::eSuccess)
-                return false;
-        }
+        frameInfo.drawCmdBuffer = m_cmdBuffer.get();
+        frameInfo.framebuffer = m_framebuffer.get();
+        frameInfo.extent = m_extent;
+        frameInfo.image = m_frameImageInfo.imageHandle.get();
+        frameInfo.view = m_frameImageInfo.view.get();
+        frameInfo.renderPass = m_renderPass.get();
     }
 
-    // copy to the destination image
-    // ref https://github.com/SaschaWillems/Vulkan/blob/master/examples/renderheadless/renderheadless.cpp
+    // begin recording commands
+    vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+    frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo, m_deviceManager.GetDispatcher());
+
+    // begin the render pass
+    std::array<float, 4> colorClearValues = m_colorClearValues;
+    std::array<vk::ClearValue, 2> clearValues = {};
+    clearValues[0].color = colorClearValues;
+    clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0u);
+    vk::Rect2D renderArea = { {0, 0}, { frameInfo.extent } };
+    vk::RenderPassBeginInfo renderPassBeginInfo(
+        frameInfo.renderPass,
+        frameInfo.framebuffer,
+        renderArea,
+        (uint32_t)clearValues.size(), clearValues.data());
+    frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline, m_deviceManager.GetDispatcher());
+
+    // update viewport and scissor
     {
-        m_deviceManager.WaitDevice();
+        vk::Viewport viewport = {
+            0.f, 0.f,
+            (float)frameInfo.extent.width,
+            (float)frameInfo.extent.height,
+            0.f, 1.f
+        };
+        vk::Rect2D scissor = {
+            { 0,0 },
+            {
+                frameInfo.extent.width,
+                frameInfo.extent.height
+            }
+        };
+        frameInfo.drawCmdBuffer.setViewport(0, viewport, m_deviceManager.GetDispatcher());
+        frameInfo.drawCmdBuffer.setScissor(0, scissor, m_deviceManager.GetDispatcher());
+    }
 
-        // Do the actual blit from the offscreen image to our host visible destination image
-        vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-        m_cmdBuffer.get().begin(cmdBufferBeginInfo, m_deviceManager.GetDispatcher());
+    return true;
+}
 
-        // Transition destination image to transfer destination layout
-        {
-//             vks::tools::insertImageMemoryBarrier(
-//                 copyCmd,
-//                 dstImage,
-//                 0,
-//                 VK_ACCESS_TRANSFER_WRITE_BIT,
-//                 VK_IMAGE_LAYOUT_UNDEFINED,
-//                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-//                 VK_PIPELINE_STAGE_TRANSFER_BIT,
-//                 VK_PIPELINE_STAGE_TRANSFER_BIT,
-//                 VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+bool 
+HeadlessRenderer::EndRenderFrame(const VulkanUtils::FrameUpdateInfo& frameInfo) const
+{
+    frameInfo.drawCmdBuffer.endRenderPass(m_deviceManager.GetDispatcher());
+    frameInfo.drawCmdBuffer.end(m_deviceManager.GetDispatcher());
 
-            vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+    // submit graphics queue
+    {
+        vk::FenceCreateInfo fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
+        VulkanUtils::FenceHandle fence = m_deviceManager.GetDevice().createFenceUnique(
+            fenceCreateInfo, nullptr, m_deviceManager.GetDispatcher());
+        m_deviceManager.GetDevice().resetFences(fence.get(), m_deviceManager.GetDispatcher());
 
-            vk::ImageMemoryBarrier barrierFromLinearToTransfer(
-                vk::AccessFlags(),
-                vk::AccessFlagBits::eTransferWrite,
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eTransferDstOptimal,
-                m_deviceManager.GetGraphicsQueueInfo().familyIndex,
-                m_deviceManager.GetGraphicsQueueInfo().familyIndex,
-                m_dstImageInfo.imageHandle.get(),
-                imageSubresourceRange);
-
-            m_cmdBuffer.get().pipelineBarrier(
-                vk::PipelineStageFlagBits::eTransfer,
-                vk::PipelineStageFlagBits::eTransfer,
-                vk::DependencyFlags(),
-                nullptr, nullptr, barrierFromLinearToTransfer, m_deviceManager.GetDispatcher());
-        }
-
-        // colorAttachment.image is already in VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, and does not need to be transitioned
-
-        vk::ImageCopy imageCopyRegion = {};
-        imageCopyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-        imageCopyRegion.srcSubresource.layerCount = 1;
-        imageCopyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-        imageCopyRegion.dstSubresource.layerCount = 1;
-        imageCopyRegion.extent.width = m_extent.width;
-        imageCopyRegion.extent.height = m_extent.height;
-        imageCopyRegion.extent.depth = 1;
-
-        m_cmdBuffer.get().copyImage(
-            m_frameImageInfo.imageHandle.get(), vk::ImageLayout::eTransferSrcOptimal,
-            m_dstImageInfo.imageHandle.get(), vk::ImageLayout::eTransferDstOptimal,
-            imageCopyRegion, m_deviceManager.GetDispatcher());
-
-        // Transition destination image to general layout, which is the required layout for mapping the image memory later on
-        {
-            //         vks::tools::insertImageMemoryBarrier(
-            //             copyCmd,
-            //             dstImage,
-            //             VK_ACCESS_TRANSFER_WRITE_BIT,
-            //             VK_ACCESS_MEMORY_READ_BIT,
-            //             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            //             VK_IMAGE_LAYOUT_GENERAL,
-            //             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            //             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            //             VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
-
-            vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-
-            vk::ImageMemoryBarrier barrierFromLinearToTransfer(
-                vk::AccessFlagBits::eTransferWrite,
-                vk::AccessFlagBits::eMemoryRead,
-                vk::ImageLayout::eTransferDstOptimal,
-                vk::ImageLayout::eGeneral,
-                m_deviceManager.GetGraphicsQueueInfo().familyIndex,
-                m_deviceManager.GetGraphicsQueueInfo().familyIndex,
-                m_dstImageInfo.imageHandle.get(),
-                imageSubresourceRange);
-
-            m_cmdBuffer.get().pipelineBarrier(
-                vk::PipelineStageFlagBits::eTransfer,
-                vk::PipelineStageFlagBits::eTransfer,
-                vk::DependencyFlags(),
-                nullptr, nullptr, barrierFromLinearToTransfer, m_deviceManager.GetDispatcher());
-        }
-
-        m_cmdBuffer.get().end(m_deviceManager.GetDispatcher());
-
-        // submit & wait for the queue now to finish the copy
+        //vk::PipelineStageFlags waitDstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         vk::SubmitInfo submitInfo(
             0, nullptr,
             nullptr,
             1, &m_cmdBuffer.get(),
             0, nullptr);
-        m_deviceManager.GetGraphicsQueueInfo().queue.submit(
-            submitInfo, nullptr, m_deviceManager.GetDispatcher());
-
-        m_deviceManager.GetDevice().waitIdle(m_deviceManager.GetDispatcher());
+        m_deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, fence.get(), m_deviceManager.GetDispatcher());
+        //m_deviceManager.GetDevice().waitForFences(fence.get(), VK_TRUE, UINT64_MAX, m_deviceManager.GetDispatcher());
+        if (m_deviceManager.GetDevice().waitForFences(
+            fence.get(), VK_TRUE, UINT64_MAX, m_deviceManager.GetDispatcher()) != vk::Result::eSuccess)
+            return false;
     }
 
-
     return true;
+}
+
+void 
+HeadlessRenderer::CopyRenderFrame() const
+{
+    // copy to the destination image
+    // ref https://github.com/SaschaWillems/Vulkan/blob/master/examples/renderheadless/renderheadless.cpp
+
+    m_deviceManager.WaitDevice();
+
+    // Do the actual blit from the offscreen image to our host visible destination image
+    vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+    m_cmdBuffer.get().begin(cmdBufferBeginInfo, m_deviceManager.GetDispatcher());
+
+    // Transition destination image to transfer destination layout
+    {
+        vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+
+        vk::ImageMemoryBarrier barrierFromLinearToTransfer(
+            vk::AccessFlags(),
+            vk::AccessFlagBits::eTransferWrite,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eTransferDstOptimal,
+            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
+            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
+            m_dstImageInfo.imageHandle.get(),
+            imageSubresourceRange);
+
+        m_cmdBuffer.get().pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::DependencyFlags(),
+            nullptr, nullptr, barrierFromLinearToTransfer, m_deviceManager.GetDispatcher());
+    }
+
+    // colorAttachment.image is already in VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, and does not need to be transitioned
+
+    vk::ImageCopy imageCopyRegion = {};
+    imageCopyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+    imageCopyRegion.srcSubresource.layerCount = 1;
+    imageCopyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+    imageCopyRegion.dstSubresource.layerCount = 1;
+    imageCopyRegion.extent.width = m_extent.width;
+    imageCopyRegion.extent.height = m_extent.height;
+    imageCopyRegion.extent.depth = 1;
+
+    m_cmdBuffer.get().copyImage(
+        m_frameImageInfo.imageHandle.get(), vk::ImageLayout::eTransferSrcOptimal,
+        m_dstImageInfo.imageHandle.get(), vk::ImageLayout::eTransferDstOptimal,
+        imageCopyRegion, m_deviceManager.GetDispatcher());
+
+    // Transition destination image to general layout, which is the required layout for mapping the image memory later on
+    {
+        vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+
+        vk::ImageMemoryBarrier barrierFromLinearToTransfer(
+            vk::AccessFlagBits::eTransferWrite,
+            vk::AccessFlagBits::eMemoryRead,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eGeneral,
+            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
+            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
+            m_dstImageInfo.imageHandle.get(),
+            imageSubresourceRange);
+
+        m_cmdBuffer.get().pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::DependencyFlags(),
+            nullptr, nullptr, barrierFromLinearToTransfer, m_deviceManager.GetDispatcher());
+    }
+
+    m_cmdBuffer.get().end(m_deviceManager.GetDispatcher());
+
+    // submit & wait for the queue now to finish the copy
+    vk::SubmitInfo submitInfo(
+        0, nullptr,
+        nullptr,
+        1, &m_cmdBuffer.get(),
+        0, nullptr);
+    m_deviceManager.GetGraphicsQueueInfo().queue.submit(
+        submitInfo, nullptr, m_deviceManager.GetDispatcher());
+
+    m_deviceManager.GetDevice().waitIdle(m_deviceManager.GetDispatcher());
 }
 
 bool 
