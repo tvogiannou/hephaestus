@@ -16,7 +16,7 @@ class RenderMeshData;
 
 class VulkanWindowRenderer : public hephaestus::SwapChainRenderer
 {
-    // wrapper pipeline to render imgui via the renderer
+    // wrapper pipeline to render imgui via the window renderer
     class ImGuiPipeline : public PipelineBase
     {
     public:
@@ -26,7 +26,7 @@ class VulkanWindowRenderer : public hephaestus::SwapChainRenderer
 
         bool SetupPipeline(vk::RenderPass renderPass, vk::CommandPool commandPool, vk::CommandBuffer cmdBuffer);
 
-        void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const override;
+        void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
     };
 
 public:

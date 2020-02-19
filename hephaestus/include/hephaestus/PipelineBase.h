@@ -68,8 +68,6 @@ public:
     const VulkanUtils::BufferInfo& GetVertexBufferInfo() const { return m_vertexBufferInfo; }
     const VulkanDeviceManager& GetDeviceManager() const { return m_deviceManager; }
 
-    // override to record draw commands to the frame command buffer
-    virtual void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& /*frameInfo*/) const {}
     // override to setup more descriptor sets
     // TODO: make this less error prone
     virtual bool SetupDescriptorSets();

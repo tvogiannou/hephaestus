@@ -57,6 +57,7 @@ public:
     bool IsReadyToDraw() const { return m_canDraw; }
     const vk::Extent2D& GetSwapChainExtend() const { return m_swapChainInfo.extent; }
 
+    // Rendering methods, any record commands can be called in between the two given the frame info
     RenderStatus RenderBegin(ResourceUpdateInfo& frameInfo, RenderStats& stats);
     RenderStatus RenderEnd(const ResourceUpdateInfo& frameInfo, RenderStats& stats);
 

@@ -36,8 +36,7 @@ public:
     // set line data
     bool AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo);
 
-	// base class override
-	void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const override;
+	void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
 
 private:
 

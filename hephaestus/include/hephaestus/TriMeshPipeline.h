@@ -58,8 +58,7 @@ public:
 	bool SetupPipeline(vk::RenderPass renderPass, 
         const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
 
-	// base class overrides
-	void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const override;
+	void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
 
 private:
 
