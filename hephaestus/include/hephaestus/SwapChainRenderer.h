@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <utility>
+#include <chrono>
 
 
 namespace hephaestus
@@ -35,13 +36,15 @@ public:
         eRENDER_STATUS_FAIL_PRESENT,
     };
 
-    struct ResourceUpdateInfo : public VulkanUtils::FrameUpdateInfo
+    struct RenderInfo 
     {
-        uint32_t virtualFrameIndex;
-        uint32_t imageIndex;
+        VulkanUtils::FrameUpdateInfo    frameInfo;
+        uint32_t                        virtualFrameIndex;
+        uint32_t                        imageIndex;
     };
 
 
+public:
     explicit SwapChainRenderer(const VulkanDeviceManager& _deviceManager) :
         RendererBase(_deviceManager)
     {}
@@ -58,8 +61,8 @@ public:
     const vk::Extent2D& GetSwapChainExtend() const { return m_swapChainInfo.extent; }
 
     // Rendering methods, any record commands can be called in between the two given the frame info
-    RenderStatus RenderBegin(ResourceUpdateInfo& frameInfo, RenderStats& stats);
-    RenderStatus RenderEnd(const ResourceUpdateInfo& frameInfo, RenderStats& stats);
+    RenderStatus RenderBegin(RenderInfo& renderInfo, RenderStats& stats);
+    RenderStatus RenderEnd(const RenderInfo& renderInfo, RenderStats& stats);
 
 
     // Utility method for rendering arbitrary number of different pipeline types
@@ -68,25 +71,30 @@ public:
     template<typename... Args>
     static RenderStatus RenderPipelines(SwapChainRenderer& renderer, RenderStats& stats, Args&&... pipelines)
     {
-        ResourceUpdateInfo updateInfo;
-        renderer.RenderBegin(updateInfo, stats);
+        RenderInfo renderInfo;
+        RenderStatus status = renderer.RenderBegin(renderInfo, stats);
 
-        //RenderPipelines(updateInfo, pipelines, stats);
-        const VulkanUtils::FrameUpdateInfo& frameInfo = updateInfo;
+        if (status != eRENDER_STATUS_COMPLETE)
+            return status;
+
+        auto timer_commandStart = std::chrono::high_resolution_clock::now();
+       
+        // expand variadic pack and call RecordDrawCommands for each argument
+        // https://en.cppreference.com/w/cpp/language/parameter_pack
         {
-            // expand variadic pack 
-            // https://en.cppreference.com/w/cpp/language/parameter_pack
-            {
-                PackExpansionHelper helper(frameInfo);
+            PackExpansionContext helper(renderInfo.frameInfo);
 
-                using expander = int[];
-                (void)expander{0, ((void)helper.RecordDrawCommands(std::forward<Args>(pipelines)), 0) ... };
-            }
+            using expander = int[];
+            (void)expander{0, ((void)helper.RecordDrawCommands(std::forward<Args>(pipelines)), 0) ... };
         }
-        
-        renderer.RenderEnd(updateInfo, stats);
 
-        return RenderStatus::eRENDER_STATUS_COMPLETE;
+        auto timer_commandEnd = std::chrono::high_resolution_clock::now();
+
+        stats.commandTime = std::chrono::duration<float, std::milli>(timer_commandEnd - timer_commandStart).count();
+        
+        status = renderer.RenderEnd(renderInfo, stats);
+
+        return status;
     }
 
 private:
@@ -98,15 +106,15 @@ private:
     // virtual frame info
     VulkanUtils::SwapChainInfo m_swapChainInfo;
     std::vector<VulkanUtils::VirtualFrameResources> m_virtualFrames;
-    uint32_t m_virtualFrameIndex = 0;
+    uint32_t m_nextAvailableVirtualFrameIndex = 0;
 
 private:
     bool m_canDraw = false; // volatile?
 
-    // helper type for storing the frame info of each cal to RecordDrawCommands
-    struct PackExpansionHelper
+    // helper type for storing the frame info of each call to RecordDrawCommands
+    struct PackExpansionContext
     {
-        PackExpansionHelper(const VulkanUtils::FrameUpdateInfo& _frameInfo) :
+        PackExpansionContext(const VulkanUtils::FrameUpdateInfo& _frameInfo) :
             frameInfo(_frameInfo)
         {}
 

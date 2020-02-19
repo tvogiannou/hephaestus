@@ -28,20 +28,22 @@ public:
     const vk::Extent2D& GetExtent() const { return m_extent; }
 
 
-    bool BeginRenderFrame(VulkanUtils::FrameUpdateInfo& frameInfo) const;
-    bool EndRenderFrame(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
+    bool RenderBegin(VulkanUtils::FrameUpdateInfo& frameInfo) const;
+    bool RenderEnd(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
 
-    // util to render single pipeline
+    // util to render single pipeline of any type
+    // only requirement is that the passed types support a method with signature
+    // RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& /*frameInfo*/) const
     template<typename PipelineType>
     bool RenderPipeline(const PipelineType& pipeline) const
     {
         VulkanUtils::FrameUpdateInfo frameInfo;
-        if (!BeginRenderFrame(frameInfo))
+        if (!RenderBegin(frameInfo))
             return false;
 
         pipeline.RecordDrawCommands(frameInfo);
 
-        if (!EndRenderFrame(frameInfo))
+        if (!RenderEnd(frameInfo))
             return false;
 
         CopyRenderFrame();

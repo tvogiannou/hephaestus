@@ -131,7 +131,7 @@ HeadlessRenderer::Clear()
 }
 
 bool 
-HeadlessRenderer::BeginRenderFrame(VulkanUtils::FrameUpdateInfo& frameInfo) const
+HeadlessRenderer::RenderBegin(VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
     m_deviceManager.WaitDevice();
 
@@ -185,7 +185,7 @@ HeadlessRenderer::BeginRenderFrame(VulkanUtils::FrameUpdateInfo& frameInfo) cons
 }
 
 bool 
-HeadlessRenderer::EndRenderFrame(const VulkanUtils::FrameUpdateInfo& frameInfo) const
+HeadlessRenderer::RenderEnd(const VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
     frameInfo.drawCmdBuffer.endRenderPass(m_deviceManager.GetDispatcher());
     frameInfo.drawCmdBuffer.end(m_deviceManager.GetDispatcher());
