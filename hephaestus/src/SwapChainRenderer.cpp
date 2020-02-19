@@ -44,11 +44,12 @@ SwapChainRenderer::Clear()
     RendererBase::Clear();
 }
 
-SwapChainRenderer::RenderStatus
-SwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& stats)
+SwapChainRenderer::RenderStatus 
+SwapChainRenderer::RenderBegin(ResourceUpdateInfo& frameInfo, RenderStats& stats)
 {
     // update resource index
     HEPHAESTUS_LOG_ASSERT(m_virtualFrameIndex < m_virtualFrames.size(), "Virtual frame index out of range");
+    frameInfo.virtualFrameIndex = m_virtualFrameIndex;
     VulkanUtils::VirtualFrameResources& currentResource = m_virtualFrames[m_virtualFrameIndex];
     m_virtualFrameIndex = (m_virtualFrameIndex + 1) % m_virtualFrames.size();
 
@@ -64,25 +65,25 @@ SwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& 
 
     uint32_t imageIndex = UINT32_MAX;
     vk::Result result = m_deviceManager.GetDevice().acquireNextImageKHR(
-        m_swapChainInfo.swapChainHandle.get(), UINT64_MAX, 
+        m_swapChainInfo.swapChainHandle.get(), UINT64_MAX,
         currentResource.imageAvailableSemaphore.get(), nullptr, &imageIndex, m_dispatcher);
-    switch(result)
+    switch (result)
     {
-        case vk::Result::eSuccess:
-        case vk::Result::eSuboptimalKHR:
-            break;
-        case vk::Result::eErrorOutOfDateKHR:
-        {
-            if (!UpdateSwapChain())
-                return RenderStatus::eRENDER_STATUS_FAIL_RESIZE;
-            return RenderStatus::eRENDER_STATUS_RESIZE;
-        }
-        default:
-            return RenderStatus::eRENDER_STATUS_FAIL_ACQUIRE_IMAGE;
+    case vk::Result::eSuccess:
+    case vk::Result::eSuboptimalKHR:
+        break;
+    case vk::Result::eErrorOutOfDateKHR:
+    {
+        if (!UpdateSwapChain())
+            return RenderStatus::eRENDER_STATUS_FAIL_RESIZE;
+        return RenderStatus::eRENDER_STATUS_RESIZE;
+    }
+    default:
+        return RenderStatus::eRENDER_STATUS_FAIL_ACQUIRE_IMAGE;
     }
 
-     if(imageIndex >= m_swapChainInfo.imageRefs.size())
-         return RenderStatus::eRENDER_STATUS_FAIL_ACQUIRE_IMAGE;
+    if (imageIndex >= m_swapChainInfo.imageRefs.size())
+        return RenderStatus::eRENDER_STATUS_FAIL_ACQUIRE_IMAGE;
 
     std::array<vk::ImageView, 2> attachments = {
         m_swapChainInfo.imageRefs[imageIndex].view.get(),
@@ -98,32 +99,124 @@ SwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& 
         m_swapChainInfo.extent.height,
         1);		// layers
 
-    currentResource.framebuffer = 
+    currentResource.framebuffer =
         m_deviceManager.GetDevice().createFramebufferUnique(frameBufferCreateInfo, nullptr, m_dispatcher);
 
     // record the draw commands from all pipelines
     {
-        VulkanUtils::FrameUpdateInfo frameInfo;
-        {
-            frameInfo.drawCmdBuffer = currentResource.commandBuffer.get();
-            frameInfo.framebuffer = currentResource.framebuffer.get();
-            frameInfo.extent = m_swapChainInfo.extent;
-            frameInfo.image = m_swapChainInfo.imageRefs[imageIndex].image;
-            frameInfo.view = m_swapChainInfo.imageRefs[imageIndex].view.get();
-            frameInfo.renderPass = m_renderPass.get();
-        }
+        frameInfo.imageIndex = imageIndex;
 
-        RecordPipelineCommands(pipelines, frameInfo);
+        frameInfo.drawCmdBuffer = currentResource.commandBuffer.get();
+        frameInfo.framebuffer = currentResource.framebuffer.get();
+        frameInfo.extent = m_swapChainInfo.extent;
+        frameInfo.image = m_swapChainInfo.imageRefs[imageIndex].image;
+        frameInfo.view = m_swapChainInfo.imageRefs[imageIndex].view.get();
+        frameInfo.renderPass = m_renderPass.get();
     }
-    
+
     auto timer_queueStart = std::chrono::high_resolution_clock::now();
+
+    // begin recording commands
+    vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+    frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo, m_dispatcher);
+
+    // add memory barrier to change from the present queue to the graphics queue 
+    vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+    if (m_deviceManager.GetPresentQueueInfo().familyIndex != m_deviceManager.GetGraphicsQueueInfo().familyIndex)
+    {
+        vk::ImageMemoryBarrier barrierFromPresentToClear(
+            vk::AccessFlagBits::eMemoryRead,
+            vk::AccessFlagBits::eMemoryRead,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::ePresentSrcKHR,
+            m_deviceManager.GetPresentQueueInfo().familyIndex,
+            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
+            frameInfo.image,
+            imageSubresourceRange);
+
+        frameInfo.drawCmdBuffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            vk::DependencyFlags(),
+            nullptr, nullptr, barrierFromPresentToClear, m_dispatcher);
+    }
+
+    // begin the render pass
+    //std::array<float, 4> colorClearValues = { 0.7f, 0.88f, 0.9f, 1.0f };
+    std::array<vk::ClearValue, 2> clearValues = {};
+    clearValues[0].color = m_colorClearValues;
+    clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0u);
+    vk::Rect2D renderArea = { {0, 0}, { frameInfo.extent } };
+    vk::RenderPassBeginInfo renderPassBeginInfo(
+        frameInfo.renderPass,
+        frameInfo.framebuffer,
+        renderArea,
+        (uint32_t)clearValues.size(), clearValues.data());
+    frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline, m_dispatcher);
+
+    // update viewport and scissor
+    {
+        vk::Viewport viewport = {
+            0.f, 0.f,
+            (float)frameInfo.extent.width,
+            (float)frameInfo.extent.height,
+            0.f, 1.f
+        };
+        vk::Rect2D scissor = {
+            { 0,0 },
+            {
+                frameInfo.extent.width,
+                frameInfo.extent.height
+            }
+        };
+        frameInfo.drawCmdBuffer.setViewport(0, viewport, m_dispatcher);
+        frameInfo.drawCmdBuffer.setScissor(0, scissor, m_dispatcher);
+    }
+
+    stats.waitTime = std::chrono::duration<float, std::milli>(timer_commandStart - timer_waitStart).count();
+    stats.commandTime = std::chrono::duration<float, std::milli>(timer_queueStart - timer_commandStart).count();
+
+    return RenderStatus::eRENDER_STATUS_COMPLETE;
+}
+
+SwapChainRenderer::RenderStatus
+SwapChainRenderer::RenderEnd(const ResourceUpdateInfo& frameInfo, RenderStats& stats)
+{
+    frameInfo.drawCmdBuffer.endRenderPass(m_dispatcher);
+
+    // add memory barrier to change from the graphics queue to the present queue 
+    vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+    if (m_deviceManager.GetPresentQueueInfo().familyIndex != m_deviceManager.GetGraphicsQueueInfo().familyIndex)
+    {
+        vk::ImageMemoryBarrier barrierFromClearToPresent(
+            vk::AccessFlagBits::eMemoryRead,
+            vk::AccessFlagBits::eMemoryRead,
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::ImageLayout::ePresentSrcKHR,
+            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
+            m_deviceManager.GetPresentQueueInfo().familyIndex,
+            frameInfo.image,
+            imageSubresourceRange);
+
+        frameInfo.drawCmdBuffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits::eBottomOfPipe,
+            vk::DependencyFlags(),
+            nullptr, nullptr, barrierFromClearToPresent, m_dispatcher);
+    }
+
+    frameInfo.drawCmdBuffer.end(m_dispatcher);
+
+    auto timer_queueStart = std::chrono::high_resolution_clock::now();
+
+    VulkanUtils::VirtualFrameResources& currentResource = m_virtualFrames[frameInfo.virtualFrameIndex];
 
     // submit graphics queue
     {
         vk::PipelineStageFlags waitDstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         vk::SubmitInfo submitInfo(
             1, &currentResource.imageAvailableSemaphore.get(),
-            &waitDstStageMask, 
+            &waitDstStageMask,
             1, &currentResource.commandBuffer.get(),
             1, &currentResource.finishedRenderingSemaphore.get());
         m_deviceManager.GetGraphicsQueueInfo().queue.submit(
@@ -133,13 +226,13 @@ SwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& 
     auto timer_presentStart = std::chrono::high_resolution_clock::now();
 
     // submit present queue
-    {	
+    {
         vk::PresentInfoKHR presentInfo(
             1, &currentResource.finishedRenderingSemaphore.get(),
             1, &m_swapChainInfo.swapChainHandle.get(),
-            &imageIndex,
+            &frameInfo.imageIndex,
             nullptr);
-        
+
         // Vulkan hpp throws an exception when VK_ERROR_OUT_OF_DATE_KHR is generated 
         // so we fall back to the C API for evaluating the result
         // Note that this seems to a problem due to GLFW not triggering the 
@@ -147,21 +240,21 @@ SwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& 
         {
             VkPresentInfoKHR vkPresetInfo(presentInfo);
             // In FIFO, this is blocking potentially waiting for vsync to complete (instead of acquireNextImageKHR?)
-            VkResult vkresult = 
+            VkResult vkresult =
                 m_dispatcher.vkQueuePresentKHR(VkQueue(m_deviceManager.GetPresentQueueInfo().queue), &vkPresetInfo);
-            switch(vkresult)
+            switch (vkresult)
             {
-                case VK_SUCCESS:
-                    break;
-                case VK_ERROR_OUT_OF_DATE_KHR:
-                case VK_SUBOPTIMAL_KHR:
-                {
-                    if (!UpdateSwapChain())
-                        return RenderStatus::eRENDER_STATUS_FAIL_RESIZE;
-                    return RenderStatus::eRENDER_STATUS_RESIZE;
-                }
-                default:
-                    return RenderStatus::eRENDER_STATUS_FAIL_PRESENT;
+            case VK_SUCCESS:
+                break;
+            case VK_ERROR_OUT_OF_DATE_KHR:
+            case VK_SUBOPTIMAL_KHR:
+            {
+                if (!UpdateSwapChain())
+                    return RenderStatus::eRENDER_STATUS_FAIL_RESIZE;
+                return RenderStatus::eRENDER_STATUS_RESIZE;
+            }
+            default:
+                return RenderStatus::eRENDER_STATUS_FAIL_PRESENT;
             }
         }
     }
@@ -169,12 +262,10 @@ SwapChainRenderer::RenderPipelines(const PipelineArray& pipelines, RenderStats& 
     auto timer_drawEnd = std::chrono::high_resolution_clock::now();
 
     // setup timers
-    stats.waitTime = std::chrono::duration<float, std::milli>(timer_commandStart - timer_waitStart).count();
-    stats.commandTime = std::chrono::duration<float, std::milli>(timer_queueStart - timer_commandStart).count();
     stats.queueTime = std::chrono::duration<float, std::milli>(timer_presentStart - timer_queueStart).count();
     stats.presentTime = std::chrono::duration<float, std::milli>(timer_drawEnd - timer_presentStart).count();
 
-    return RenderStatus::eRENDER_STATUS_COMPLETE; 
+    return RenderStatus::eRENDER_STATUS_COMPLETE;
 }
 
 bool 
@@ -329,7 +420,6 @@ SwapChainRenderer::CreateSwapChain()
         return true;
     }
 
-
     vk::SwapchainCreateInfoKHR swapChainCreateInfo(
         vk::SwapchainCreateFlagsKHR(),
         m_deviceManager.GetPresentSurface(),
@@ -398,97 +488,6 @@ SwapChainRenderer::UpdateSwapChain()
         return false;
 
     return true;
-}
-
-void 
-SwapChainRenderer::RecordPipelineCommands(const PipelineArray& pipelines, const VulkanUtils::FrameUpdateInfo& frameInfo)
-{
-    // begin recording commands
-    vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-    frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo, m_dispatcher);
-
-    // add memory barrier to change from the present queue to the graphics queue 
-    vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-    if (m_deviceManager.GetPresentQueueInfo().familyIndex != m_deviceManager.GetGraphicsQueueInfo().familyIndex)
-    {
-        vk::ImageMemoryBarrier barrierFromPresentToClear(
-            vk::AccessFlagBits::eMemoryRead,
-            vk::AccessFlagBits::eMemoryRead,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::ePresentSrcKHR,
-            m_deviceManager.GetPresentQueueInfo().familyIndex,
-            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
-            frameInfo.image,
-            imageSubresourceRange);
-
-        frameInfo.drawCmdBuffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::DependencyFlags(),
-            nullptr, nullptr, barrierFromPresentToClear, m_dispatcher);
-    }
-
-    // begin the render pass
-    //std::array<float, 4> colorClearValues = { 0.7f, 0.88f, 0.9f, 1.0f };
-    std::array<vk::ClearValue, 2> clearValues = {};
-    clearValues[0].color = m_colorClearValues;
-    clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0u);
-    vk::Rect2D renderArea = { {0, 0}, { frameInfo.extent } };
-    vk::RenderPassBeginInfo renderPassBeginInfo(
-        frameInfo.renderPass,
-        frameInfo.framebuffer,
-        renderArea,
-        (uint32_t)clearValues.size(), clearValues.data());
-    frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline, m_dispatcher);
-
-    // update viewport and scissor
-    {
-        vk::Viewport viewport = {
-            0.f, 0.f,
-            (float)frameInfo.extent.width,
-            (float)frameInfo.extent.height,
-            0.f, 1.f
-        };
-        vk::Rect2D scissor = {
-            { 0,0 },
-            {
-                frameInfo.extent.width,
-                frameInfo.extent.height
-            }
-        };
-        frameInfo.drawCmdBuffer.setViewport(0, viewport, m_dispatcher);
-        frameInfo.drawCmdBuffer.setScissor(0, scissor, m_dispatcher);
-    }
-
-    for (const PipelineBase* pipeline : pipelines)
-    {
-        HEPHAESTUS_LOG_ASSERT(pipeline != nullptr, "Invalid pipeline");
-        pipeline->RecordDrawCommands(frameInfo);
-    }
-
-    frameInfo.drawCmdBuffer.endRenderPass(m_dispatcher);
-
-    // add memory barrier to change from the graphics queue to the present queue 
-    if (m_deviceManager.GetPresentQueueInfo().familyIndex != m_deviceManager.GetGraphicsQueueInfo().familyIndex)
-    {
-        vk::ImageMemoryBarrier barrierFromClearToPresent(
-            vk::AccessFlagBits::eMemoryRead,
-            vk::AccessFlagBits::eMemoryRead,
-            vk::ImageLayout::ePresentSrcKHR,
-            vk::ImageLayout::ePresentSrcKHR,
-            m_deviceManager.GetGraphicsQueueInfo().familyIndex,
-            m_deviceManager.GetPresentQueueInfo().familyIndex,
-            frameInfo.image,
-            imageSubresourceRange);
-
-        frameInfo.drawCmdBuffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits::eBottomOfPipe,
-            vk::DependencyFlags(),
-            nullptr, nullptr, barrierFromClearToPresent, m_dispatcher);
-    }
-
-    frameInfo.drawCmdBuffer.end(m_dispatcher);
 }
 
 } // namespace hephaestus

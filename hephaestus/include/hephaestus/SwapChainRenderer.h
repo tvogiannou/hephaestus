@@ -7,6 +7,7 @@
 #include <hephaestus/VulkanUtils.h>
 
 #include <vector>
+#include <utility>
 
 
 namespace hephaestus
@@ -15,8 +16,6 @@ namespace hephaestus
 class SwapChainRenderer : public RendererBase
 {
 public:
-
-    using PipelineArray = std::vector<const PipelineBase*>;
 
     struct RenderStats
     {
@@ -36,6 +35,12 @@ public:
         eRENDER_STATUS_FAIL_PRESENT,
     };
 
+    struct ResourceUpdateInfo : public VulkanUtils::FrameUpdateInfo
+    {
+        uint32_t virtualFrameIndex;
+        uint32_t imageIndex;
+    };
+
 
     explicit SwapChainRenderer(const VulkanDeviceManager& _deviceManager) :
         RendererBase(_deviceManager)
@@ -52,14 +57,42 @@ public:
     bool IsReadyToDraw() const { return m_canDraw; }
     const vk::Extent2D& GetSwapChainExtend() const { return m_swapChainInfo.extent; }
 
-    RenderStatus RenderPipelines(const PipelineArray& pipelines, RenderStats& stats);
+    RenderStatus RenderBegin(ResourceUpdateInfo& frameInfo, RenderStats& stats);
+    RenderStatus RenderEnd(const ResourceUpdateInfo& frameInfo, RenderStats& stats);
+
+
+    // Utility method for rendering arbitrary number of different pipeline types
+    // only requirement is that the passed types support a method with signature
+    // RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& /*frameInfo*/) const
+    template<typename... Args>
+    static RenderStatus RenderPipelines(SwapChainRenderer& renderer, RenderStats& stats, Args&&... pipelines)
+    {
+        ResourceUpdateInfo updateInfo;
+        renderer.RenderBegin(updateInfo, stats);
+
+        //RenderPipelines(updateInfo, pipelines, stats);
+        const VulkanUtils::FrameUpdateInfo& frameInfo = updateInfo;
+        {
+            // expand variadic pack 
+            // https://en.cppreference.com/w/cpp/language/parameter_pack
+            {
+                PackExpansionHelper helper(frameInfo);
+
+                using expander = int[];
+                (void)expander{0, ((void)helper.RecordDrawCommands(std::forward<Args>(pipelines)), 0) ... };
+            }
+        }
+        
+        renderer.RenderEnd(updateInfo, stats);
+
+        return RenderStatus::eRENDER_STATUS_COMPLETE;
+    }
 
 private:
     // rendering setup
     bool CreateSwapChain();
     bool UpdateSwapChain();
     bool CreateRenderingResources(uint32_t numVirtualFrames);
-    void RecordPipelineCommands(const PipelineArray& pipelines, const VulkanUtils::FrameUpdateInfo& frameInfo);
 
     // virtual frame info
     VulkanUtils::SwapChainInfo m_swapChainInfo;
@@ -68,6 +101,22 @@ private:
 
 private:
     bool m_canDraw = false; // volatile?
+
+    // helper type for storing the frame info of each cal to RecordDrawCommands
+    struct PackExpansionHelper
+    {
+        PackExpansionHelper(const VulkanUtils::FrameUpdateInfo& _frameInfo) :
+            frameInfo(_frameInfo)
+        {}
+
+        template<typename PipelineType>
+        void RecordDrawCommands(const PipelineType& pipeline)
+        {
+            pipeline.RecordDrawCommands(frameInfo);
+        }
+
+        const VulkanUtils::FrameUpdateInfo& frameInfo;
+    };
 };
 
 } // namespace hephaestus

@@ -117,8 +117,8 @@ VulkanWindowRenderer::OnWindowSizeChanged()
 bool
 VulkanWindowRenderer::Draw(float /*dtMsecs*/, SwapChainRenderer::RenderStats& stats)
 {
-    SwapChainRenderer::RenderStatus status = RenderPipelines(
-        { &m_graphicsPipeline, &m_primitivePipeline, &m_imguiPipeline }, stats);
+    SwapChainRenderer::RenderStatus status = RenderPipelines(*this, stats,
+        m_graphicsPipeline, m_primitivePipeline, m_imguiPipeline);
 
     if (status == SwapChainRenderer::RenderStatus::eRENDER_STATUS_RESIZE)
         OnWindowSizeChanged();
