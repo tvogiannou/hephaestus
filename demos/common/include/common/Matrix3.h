@@ -1,5 +1,6 @@
 #pragma once
 
+#include <hephaestus/Platform.h>
 #include <common/Vector3.h>
 
 

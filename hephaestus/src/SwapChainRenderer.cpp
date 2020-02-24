@@ -114,8 +114,6 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
         renderInfo.frameInfo.renderPass = m_renderPass.get();
     }
 
-    auto timer_queueStart = std::chrono::high_resolution_clock::now();
-
     // begin recording commands
     vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     renderInfo.frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo, m_dispatcher);
