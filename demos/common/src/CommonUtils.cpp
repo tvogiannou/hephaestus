@@ -316,25 +316,25 @@ CommonUtils::GetOrthographicProjectionMatrix(float left_plane, float right_plane
 {
     // ref https://github.com/GameTechDev/IntroductionToVulkan/blob/master/Project/Common/Tools.cpp
     projection = Matrix4(
-    	2.0f / (right_plane - left_plane),
-    	0.0f,
-    	0.0f,
-    	0.0f,
+        2.0f / (right_plane - left_plane),
+        0.0f,
+        0.0f,
+        0.0f,
 
-    	0.0f,
-    	2.0f / (bottom_plane - top_plane),
-    	0.0f,
-    	0.0f,
+        0.0f,
+        2.0f / (bottom_plane - top_plane),
+        0.0f,
+        0.0f,
 
-    	0.0f,
-    	0.0f,
-    	1.0f / (near_plane - far_plane),
-    	0.0f,
+        0.0f,
+        0.0f,
+        1.0f / (near_plane - far_plane),
+        0.0f,
 
-    	-(right_plane + left_plane) / (right_plane - left_plane),
-    	-(bottom_plane + top_plane) / (bottom_plane - top_plane),
-    	near_plane / (near_plane - far_plane),
-    	1.0f
+        -(right_plane + left_plane) / (right_plane - left_plane),
+        -(bottom_plane + top_plane) / (bottom_plane - top_plane),
+        near_plane / (near_plane - far_plane),
+        1.0f
     );
 
     // TODO: return false if bad params

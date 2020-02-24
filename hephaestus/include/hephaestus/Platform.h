@@ -51,15 +51,15 @@
 
 // Adapter for assert, mainly for more convenient use with the VC debugger 
 #ifdef HEPHAESTUS_DEBUG_BUILD
-	#if defined(HEPHAESTUS_PLATFORM_WIN32)
-		#include <CRTDBG.h>
-		#include <cstdlib>
-		#define HEPHAESTUS_ASSERT(expr) if(!(expr)) { _CrtDbgBreak(); std::abort(); } // breakpoint for easier debugging
-	#else
-		#include <cassert>
-		#define HEPHAESTUS_ASSERT(expr) assert(expr)
-	#endif
+    #if defined(HEPHAESTUS_PLATFORM_WIN32)
+        #include <CRTDBG.h>
+        #include <cstdlib>
+        #define HEPHAESTUS_ASSERT(expr) if(!(expr)) { _CrtDbgBreak(); std::abort(); } // breakpoint for easier debugging
+    #else
+        #include <cassert>
+        #define HEPHAESTUS_ASSERT(expr) assert(expr)
+    #endif
 #else
-	#include <cassert>
-	#define HEPHAESTUS_ASSERT(expr) assert(expr)
+    #include <cassert>
+    #define HEPHAESTUS_ASSERT(expr) assert(expr)
 #endif

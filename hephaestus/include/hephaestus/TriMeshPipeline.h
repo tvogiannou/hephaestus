@@ -17,15 +17,15 @@ class TriMeshPipeline : public PipelineBase
 {
 public:
 
-	struct VertexData
-	{
-		static const uint32_t IndexSize = sizeof(uint32_t);
+    struct VertexData
+    {
+        static const uint32_t IndexSize = sizeof(uint32_t);
 
-		float   x, y, z;		// position
-		float	nx, ny, nz;		// normal
-		float	u, v;			// uv coords
-		float   r, g, b/*, a*/;	// vertex color
-	};
+        float   x, y, z;		// position
+        float	nx, ny, nz;		// normal
+        float	u, v;			// uv coords
+        float   r, g, b/*, a*/;	// vertex color
+    };
 
     struct SetupParams 
     {
@@ -33,15 +33,15 @@ public:
     };
 
 public:
-	TriMeshPipeline(const VulkanDeviceManager& _deviceManager) :
-		PipelineBase(_deviceManager),
+    TriMeshPipeline(const VulkanDeviceManager& _deviceManager) :
+        PipelineBase(_deviceManager),
         m_indexBufferCurSize(0u)
-	{}
+    {}
 
-	~TriMeshPipeline() { Clear(); }
-	void Clear();
+    ~TriMeshPipeline() { Clear(); }
+    void Clear();
 
-	// Resources shared by all sub-meshes
+    // Resources shared by all sub-meshes
     bool CreateIndexBuffer(uint32_t size);
 
     // Sub mesh API
@@ -55,26 +55,26 @@ public:
     void SubMeshSetVisible(uint32_t subMeshId, bool visible);
 
     // Setup internal/Vulkan data, call after setting all mesh data
-	bool SetupPipeline(vk::RenderPass renderPass, 
+    bool SetupPipeline(vk::RenderPass renderPass, 
         const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
 
-	void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
+    void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
 
 private:
 
-	// pipeline setup
-	bool SetupDescriptorSets() override;
+    // pipeline setup
+    bool SetupDescriptorSets() override;
     void SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo, 
         const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo);
 
     bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
-	void CreatePipelineLayout();
+    void CreatePipelineLayout();
 
-	// rendering pipeline setup
-	VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;
-	VulkanUtils::PipelineLayoutHandle m_pipelineLayout;
+    // rendering pipeline setup
+    VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;
+    VulkanUtils::PipelineLayoutHandle m_pipelineLayout;
 
-	// "model" info, split into submeshes sharing a vertex and an index buffer
+    // "model" info, split into submeshes sharing a vertex and an index buffer
     VulkanUtils::BufferInfo m_indexBufferInfo;
     VkDeviceSize m_indexBufferCurSize; // size of data (in byte) currently set in the index buffer
     struct SubMeshInfo

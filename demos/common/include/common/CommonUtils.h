@@ -30,24 +30,24 @@ struct CommonUtils
     };
 
     // utils for loading data from files
-	static bool LoadBinaryFileContents(const char* filename, std::vector<char>& fileContents);
+    static bool LoadBinaryFileContents(const char* filename, std::vector<char>& fileContents);
     // reads the OBJ file and stores the geometry into a triangular mesh with the VulkanMeshGraphicsPipeline 
     // vertex format
-	static bool LoadObjFile(const char* filename, MeshUtils::TriMesh& triMesh, OBJFileInfo& objInfo);
+    static bool LoadObjFile(const char* filename, MeshUtils::TriMesh& triMesh, OBJFileInfo& objInfo);
     static bool LoadImageFromFile(const char* filename, const ImageLoadInfo& info, 
                                 std::vector<char>& imageData, MeshUtils::ImageDesc& imageDesc);
     static bool LoadImageFromBuffer(const char* rawDataBuffer, uint32_t size, const ImageLoadInfo& info,
                                     std::vector<char>& imageData, MeshUtils::ImageDesc& imageDesc);
 
     // projection matrix utils
-	static bool GetPerspectiveProjectionMatrixVulkan(float aspect_ratio, float field_of_view, 
+    static bool GetPerspectiveProjectionMatrixVulkan(float aspect_ratio, float field_of_view, 
                                                      float near_clip, float far_clip,
                                                      Matrix4& projection);
-	static bool GetPerspectiveProjectionMatrixBasic(float aspect_ratio, float field_of_view, 
+    static bool GetPerspectiveProjectionMatrixBasic(float aspect_ratio, float field_of_view, 
                                                     float near_clip, float far_clip,
                                                     Matrix4& projection);
-	static bool GetOrthographicProjectionMatrix(float left_plane, float right_plane, float top_plane,
-									            float bottom_plane, float near_plane, float far_plane,
+    static bool GetOrthographicProjectionMatrix(float left_plane, float right_plane, float top_plane,
+                                                float bottom_plane, float near_plane, float far_plane,
                                                 Matrix4& projection);
 
     // string utils

@@ -15,14 +15,14 @@ namespace hephaestus
 struct MeshUtils
 {
     // Container for triangle mesh
-	struct TriMesh
-	{
-		std::vector<float> vertexData;  // in all following utils, this buffer is assumed to contain
+    struct TriMesh
+    {
+        std::vector<float> vertexData;  // in all following utils, this buffer is assumed to contain
                                         // vertices in the VulkanMeshGraphicsPipeline::VertexData format
         std::vector<uint32_t> indices;  // "flattened" triangle indices
 
-		uint32_t vertexCount = 0;       // cached number of vertices
-	};
+        uint32_t vertexCount = 0;       // cached number of vertices
+    };
 
     // Container with the extra info describing an image (but not the data buffer)
     struct ImageDesc

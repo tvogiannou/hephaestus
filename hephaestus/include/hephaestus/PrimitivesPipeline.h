@@ -24,25 +24,25 @@ public:
 
 public:
     explicit PrimitivesPipeline(const VulkanDeviceManager& _deviceManager) :
-		PipelineBase(_deviceManager)
-	{}
+        PipelineBase(_deviceManager)
+    {}
 
-	~PrimitivesPipeline() { Clear(); }
-	void Clear();
+    ~PrimitivesPipeline() { Clear(); }
+    void Clear();
 
     // render data setup
-	bool SetupPipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
+    bool SetupPipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
 
     // set line data
     bool AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo);
 
-	void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
+    void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
 
 private:
 
     bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
 
-	// rendering pipeline setup
+    // rendering pipeline setup
     VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;
     VulkanUtils::PipelineLayoutHandle m_graphicsPipelineLayout;
 
