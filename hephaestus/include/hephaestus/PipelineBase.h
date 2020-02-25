@@ -3,7 +3,6 @@
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanPlatformConfig.h>
 #include <hephaestus/VulkanDeviceManager.h>
-#include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanUtils.h>
 
 #include <array>
@@ -40,7 +39,6 @@ public:
 
     explicit PipelineBase(const VulkanDeviceManager& _deviceManager) :
         m_deviceManager(_deviceManager),
-        m_dispatcher(_deviceManager.GetDispatcher()),
         m_vertexBufferCurSize(0u)
     {}
     virtual ~PipelineBase() { Clear(); }
@@ -78,7 +76,6 @@ protected:
         vk::ShaderModule& vertexShaderModule, vk::ShaderModule& fragmentShaderModule);
 
     const VulkanDeviceManager& m_deviceManager;
-    const VulkanDispatcher& m_dispatcher;	// reference for convenience
 
     // descriptor set data
     VulkanUtils::DescriptorPoolHandle m_descriptorPool;

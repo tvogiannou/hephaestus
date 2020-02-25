@@ -12,13 +12,13 @@ void
 TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
     // bind pipeline
-    frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanGraphicsPipeline.get(), m_dispatcher);
+    frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanGraphicsPipeline.get());
 
     // draw the indexed vertex buffer
     if (m_vertexBufferInfo.bufferHandle && m_indexBufferInfo.bufferHandle)
     {
-        frameInfo.drawCmdBuffer.bindVertexBuffers(0, m_vertexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u, m_dispatcher);
-        frameInfo.drawCmdBuffer.bindIndexBuffer(m_indexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u, vk::IndexType::eUint32, m_dispatcher);
+        frameInfo.drawCmdBuffer.bindVertexBuffers(0, m_vertexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u);
+        frameInfo.drawCmdBuffer.bindIndexBuffer(m_indexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u, vk::IndexType::eUint32);
 
         for (size_t i = 0; i < m_subMeshes.size(); ++i)
         {
@@ -29,7 +29,7 @@ TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInf
                 HEPHAESTUS_LOG_ASSERT(info.descriptorSetInfo.handle, "Cannot bind sub mesh without valid descriptor set");
 
                 frameInfo.drawCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                    m_pipelineLayout.get(), 0, info.descriptorSetInfo.handle.get(), nullptr, m_dispatcher);
+                    m_pipelineLayout.get(), 0, info.descriptorSetInfo.handle.get(), nullptr);
 
                 // compute offsets & index size from bytes to vertex indices as expected by drawIndexed()
                 const uint32_t subMeshIndexSize =
@@ -41,7 +41,7 @@ TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInf
                 const uint32_t indexOffset = (uint32_t)info.indexOffset / VertexData::IndexSize;
                 const uint32_t vertexOffset = (int32_t)info.vertexOffset / sizeof(VertexData);
 
-                frameInfo.drawCmdBuffer.drawIndexed(indicesCount, 1, indexOffset, vertexOffset, 0, m_dispatcher);
+                frameInfo.drawCmdBuffer.drawIndexed(indicesCount, 1, indexOffset, vertexOffset, 0);
             }
         }
     }
@@ -87,7 +87,7 @@ TriMeshPipeline::SetupDescriptorSets()
             vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
         
         m_descriptorSetLayout =
-            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr, m_dispatcher);
+            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr);
     }
 
     for (SubMeshInfo& info : m_subMeshes)
@@ -104,9 +104,9 @@ TriMeshPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
     {
         vk::DescriptorSetAllocateInfo allocInfo(
             m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
-        std::vector<vk::DescriptorSet> descSet = m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo, m_dispatcher);
+        std::vector<vk::DescriptorSet> descSet = m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo);
         vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
-            m_deviceManager.GetDevice(), m_descriptorPool.get(), m_dispatcher);
+            m_deviceManager.GetDevice(), m_descriptorPool.get());
         descSetInfo.handle = VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
     }
 
@@ -144,7 +144,7 @@ TriMeshPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
             nullptr);
     }
 
-    m_deviceManager.GetDevice().updateDescriptorSets(descriptorWrites, nullptr, m_dispatcher);
+    m_deviceManager.GetDevice().updateDescriptorSets(descriptorWrites, nullptr);
 }
 
 void
@@ -157,7 +157,7 @@ TriMeshPipeline::CreatePipelineLayout()
         1, &m_descriptorSetLayout.get(),
         0, nullptr);
     m_pipelineLayout =
-        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr, m_dispatcher);
+        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr);
 }
 
 bool
@@ -315,7 +315,7 @@ TriMeshPipeline::CreatePipeline(vk::RenderPass renderPass,
         -1);								// basePipelineIndex
 
     m_vulkanGraphicsPipeline = 
-        m_deviceManager.GetDevice().createGraphicsPipelineUnique(nullptr, pipelineCreateInfo, nullptr, m_dispatcher);
+        m_deviceManager.GetDevice().createGraphicsPipelineUnique(nullptr, pipelineCreateInfo, nullptr);
 
     return true;
 }

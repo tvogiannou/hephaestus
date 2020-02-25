@@ -13,16 +13,16 @@ void
 PrimitivesPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
     // bind pipeline
-    frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanGraphicsPipeline.get(), m_dispatcher);
+    frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanGraphicsPipeline.get());
 
     // draw the vertex buffer
     if (m_vertexBufferInfo.IsValid() && m_vertexBufferCurSize > 0u)
     {
-        frameInfo.drawCmdBuffer.bindVertexBuffers(0, m_vertexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u, m_dispatcher);
+        frameInfo.drawCmdBuffer.bindVertexBuffers(0, m_vertexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u);
         frameInfo.drawCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-            m_graphicsPipelineLayout.get(), 0, m_descriptorSetInfo.handle.get(), nullptr, m_dispatcher);
+            m_graphicsPipelineLayout.get(), 0, m_descriptorSetInfo.handle.get(), nullptr);
 
-        //frameInfo.drawCmdBuffer.setLineWidth(1.f, m_dispatcher);
+        //frameInfo.drawCmdBuffer.setLineWidth(1.f);
 
         for (size_t i = 0u; i < m_lineStripOffsets.size(); ++i)
         {
@@ -32,7 +32,7 @@ PrimitivesPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frame
             const uint32_t startIndex = (uint32_t)(start / sizeof(VertexData));
             const uint32_t vertexCount = (uint32_t)(count / sizeof(VertexData));
 
-            frameInfo.drawCmdBuffer.draw(vertexCount, 1, startIndex, 0u, m_dispatcher);
+            frameInfo.drawCmdBuffer.draw(vertexCount, 1, startIndex, 0u);
         }
     }
 }
@@ -190,7 +190,7 @@ PrimitivesPipeline::CreatePipeline(
         1, &m_descriptorSetLayout.get(),
         0, nullptr);
     m_graphicsPipelineLayout = 
-        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr, m_dispatcher);
+        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr);
 
     // gather all pipeline params
     vk::GraphicsPipelineCreateInfo pipelineCreateInfo(
@@ -213,7 +213,7 @@ PrimitivesPipeline::CreatePipeline(
         -1);								// basePipelineIndex
 
     m_vulkanGraphicsPipeline = m_deviceManager.GetDevice().createGraphicsPipelineUnique(
-        nullptr, pipelineCreateInfo, nullptr, m_dispatcher);
+        nullptr, pipelineCreateInfo, nullptr);
 
     return true;
 }

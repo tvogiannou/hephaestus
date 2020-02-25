@@ -2,7 +2,7 @@
 
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanPlatformConfig.h>
-#include <hephaestus/VulkanDispatcher.h>
+#include <hephaestus/VulkanUtils.h>
 
 #include <vector>
 
@@ -13,21 +13,11 @@ namespace hephaestus
 class VulkanDeviceManager
 {
 public:
-    static const uint32_t InvalidQueueIndex = UINT32_MAX;
-
-    struct QueueInfo
-    {
-        vk::Queue	queue = nullptr;
-        uint32_t	familyIndex = VulkanDeviceManager::InvalidQueueIndex;
-    };
 
     static std::vector<char const*> GetDeviceRequiredExtensions();
     static std::vector<char const*> GetInstanceRequiredExtensions(bool enableValidationLayers);
 
 public:
-    explicit VulkanDeviceManager(VulkanDispatcher& _dispatcher) :
-        m_dispatcher(_dispatcher)
-    {}
 
     ~VulkanDeviceManager() { WaitDevice(); }
 
@@ -48,20 +38,18 @@ public:
     void WaitDevice() const;
     void Clear();
 
-    const VulkanDispatcher& GetDispatcher() const { return m_dispatcher; }
-
     const vk::Instance& GetInstance() const { return m_instance.get(); }
     const vk::Device& GetDevice() const { return m_device.get(); }
     const vk::PhysicalDevice& GetPhysicalDevice() const { return m_physicalDevice; }
     const vk::SurfaceKHR& GetPresentSurface() const { return m_presentSurface.get(); }
-    const QueueInfo& GetGraphicsQueueInfo() const { return m_graphicsQueueInfo; }
-    const QueueInfo& GetPresentQueueInfo() const { return m_presentQueueInfo; }
+    const VulkanUtils::QueueInfo& GetGraphicsQueueInfo() const { return m_graphicsQueueInfo; }
+    const VulkanUtils::QueueInfo& GetPresentQueueInfo() const { return m_presentQueueInfo; }
 
     vk::Instance GetInstance() { return m_instance.get(); }
     vk::Device GetDevice() { return m_device.get(); }
     vk::PhysicalDevice GetPhysicalDevice() { return m_physicalDevice; }
-    QueueInfo GetGraphicsQueueInfo() { return m_graphicsQueueInfo; }
-    QueueInfo GetPresentQueueInfo() { return m_presentQueueInfo; }
+    VulkanUtils::QueueInfo GetGraphicsQueueInfo() { return m_graphicsQueueInfo; }
+    VulkanUtils::QueueInfo GetPresentQueueInfo() { return m_presentQueueInfo; }
 
 private:
     // internal helpers
@@ -78,14 +66,12 @@ private:
 #endif
 
 private:
-    VulkanDispatcher& m_dispatcher;
-
     vk::UniqueHandle<vk::Instance, VulkanDispatcher> m_instance;
     vk::UniqueHandle<vk::Device, VulkanDispatcher> m_device;
     vk::PhysicalDevice m_physicalDevice;
     vk::UniqueHandle<vk::SurfaceKHR, VulkanDispatcher> m_presentSurface;
-    QueueInfo m_graphicsQueueInfo;
-    QueueInfo m_presentQueueInfo;
+    VulkanUtils::QueueInfo m_graphicsQueueInfo;
+    VulkanUtils::QueueInfo m_presentQueueInfo;
 
     // debugging
     vk::UniqueHandle<vk::DebugUtilsMessengerEXT, VulkanDispatcher> m_debugMessenger;

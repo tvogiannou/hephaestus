@@ -1,6 +1,7 @@
 #include <hephaestus/PipelineBase.h>
 
 #include <hephaestus/Log.h>
+#include <hephaestus/VulkanDispatcher.h>
 
 
 namespace hephaestus
@@ -60,7 +61,7 @@ PipelineBase::SetupDescriptorSets()
             vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
 
         m_descriptorSetLayout =
-            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr, m_dispatcher);
+            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr);
     }
 
     // allocate descriptor set
@@ -68,9 +69,9 @@ PipelineBase::SetupDescriptorSets()
         vk::DescriptorSetAllocateInfo allocInfo(
             m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
         std::vector<vk::DescriptorSet> descSet =
-            m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo, m_dispatcher);
+            m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo);
         vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
-            m_deviceManager.GetDevice(), m_descriptorPool.get(), m_dispatcher);
+            m_deviceManager.GetDevice(), m_descriptorPool.get());
         m_descriptorSetInfo.handle =
             VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
     }
@@ -92,7 +93,7 @@ PipelineBase::SetupDescriptorSets()
         &bufferInfo,	// buffer info
         nullptr);
 
-    m_deviceManager.GetDevice().updateDescriptorSets(descriptorWrites, nullptr, m_dispatcher);
+    m_deviceManager.GetDevice().updateDescriptorSets(descriptorWrites, nullptr);
 
     return true;
 }

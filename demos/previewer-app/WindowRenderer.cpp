@@ -44,7 +44,7 @@ VulkanWindowRenderer::ImGuiPipeline::SetupPipeline(
     init_info.DescriptorPool = VkDescriptorPool(m_descriptorPool.get());
     init_info.Allocator = VK_NULL_HANDLE;
     init_info.CheckVkResultFn = check_vk_result;
-    init_info.dispatcher = &m_deviceManager.GetDispatcher();
+    init_info.dispatcher = &VulkanDispatcher::GetInstance();
 
     if (!ImGui_ImplVulkan_Init(&init_info, VkRenderPass(renderPass)))
         return false;
@@ -59,12 +59,12 @@ VulkanWindowRenderer::ImGuiPipeline::SetupPipeline(
         VkCommandPool command_pool = VkCommandPool(commandPool);
         VkCommandBuffer command_buffer = VkCommandBuffer(cmdBuffer);
 
-        VkResult err = m_deviceManager.GetDispatcher().vkResetCommandPool(init_info.Device, command_pool, 0);
+        VkResult err = VulkanDispatcher::GetInstance().vkResetCommandPool(init_info.Device, command_pool, 0);
         check_vk_result(err);
         VkCommandBufferBeginInfo begin_info = {};
         begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        err = m_deviceManager.GetDispatcher().vkBeginCommandBuffer(command_buffer, &begin_info);
+        err = VulkanDispatcher::GetInstance().vkBeginCommandBuffer(command_buffer, &begin_info);
         check_vk_result(err);
 
         if (!ImGui_ImplVulkan_CreateFontsTexture(command_buffer))
@@ -74,12 +74,12 @@ VulkanWindowRenderer::ImGuiPipeline::SetupPipeline(
         end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         end_info.commandBufferCount = 1;
         end_info.pCommandBuffers = &command_buffer;
-        err = m_deviceManager.GetDispatcher().vkEndCommandBuffer(command_buffer);
+        err = VulkanDispatcher::GetInstance().vkEndCommandBuffer(command_buffer);
         check_vk_result(err);
-        err = m_deviceManager.GetDispatcher().vkQueueSubmit(init_info.Queue, 1, &end_info, VK_NULL_HANDLE);
+        err = VulkanDispatcher::GetInstance().vkQueueSubmit(init_info.Queue, 1, &end_info, VK_NULL_HANDLE);
         check_vk_result(err);
 
-        err = m_deviceManager.GetDispatcher().vkDeviceWaitIdle(init_info.Device);
+        err = VulkanDispatcher::GetInstance().vkDeviceWaitIdle(init_info.Device);
         check_vk_result(err);
         ImGui_ImplVulkan_InvalidateFontUploadObjects();
     }

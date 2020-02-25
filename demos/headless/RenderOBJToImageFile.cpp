@@ -63,7 +63,7 @@ int main()
     }
 
     // create the device manager
-    hephaestus::VulkanDeviceManager deviceManager(hephaestus::VulkanDispatcher::GetInstance());
+    hephaestus::VulkanDeviceManager deviceManager;
     {
         // setup the manager for headless rendering
         constexpr bool enableValidationLayers = true;

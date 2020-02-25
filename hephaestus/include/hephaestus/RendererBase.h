@@ -19,8 +19,7 @@ public:
 
 protected:
     explicit RendererBase(const VulkanDeviceManager& _deviceManager) :
-        m_deviceManager(_deviceManager),
-        m_dispatcher(m_deviceManager.GetDispatcher())
+        m_deviceManager(_deviceManager)
     {}
     ~RendererBase() { Clear(); }
 
@@ -43,7 +42,6 @@ public:
 
 protected:
     const VulkanDeviceManager&          m_deviceManager;
-    const VulkanDispatcher&     m_dispatcher;   // member var for convenient access
 
     Color4                              m_colorClearValues;
     VulkanUtils::CommandPoolHandle      m_graphicsCommandPool;

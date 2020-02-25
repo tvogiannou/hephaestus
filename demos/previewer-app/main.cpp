@@ -295,7 +295,7 @@ int main(/*int argc, char** argv*/)
         hephaestus::VulkanDispatcher::InitFromLibrary(vulkanLib);
         hephaestus::VulkanDispatcher::LoadGlobalFunctions();
 
-        hephaestus::VulkanDeviceManager deviceManager(hephaestus::VulkanDispatcher::GetInstance());
+        hephaestus::VulkanDeviceManager deviceManager;
         {
             hephaestus::VulkanDeviceManager::PlatformWindowInfo platformWindowInfo;
 #ifdef HEPHAESTUS_PLATFORM_WIN32

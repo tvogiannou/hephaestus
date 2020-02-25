@@ -1,6 +1,7 @@
 #include <hephaestus/SwapChainRenderer.h>
 
 #include <hephaestus/Log.h>
+#include <hephaestus/VulkanDispatcher.h>
 
 
 
@@ -57,16 +58,16 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
 
     // wait for previous commands to execute
     if (m_deviceManager.GetDevice().waitForFences(
-        currentResource.fence.get(), VK_FALSE, 1000000000, m_dispatcher) != vk::Result::eSuccess)
+        currentResource.fence.get(), VK_FALSE, 1000000000) != vk::Result::eSuccess)
         return RenderStatus::eRENDER_STATUS_FAIL_WAIT_DEVICE;
-    m_deviceManager.GetDevice().resetFences(currentResource.fence.get(), m_dispatcher);
+    m_deviceManager.GetDevice().resetFences(currentResource.fence.get());
 
     auto timer_commandStart = std::chrono::high_resolution_clock::now();
 
     uint32_t imageIndex = UINT32_MAX;
     vk::Result result = m_deviceManager.GetDevice().acquireNextImageKHR(
         m_swapChainInfo.swapChainHandle.get(), UINT64_MAX,
-        currentResource.imageAvailableSemaphore.get(), nullptr, &imageIndex, m_dispatcher);
+        currentResource.imageAvailableSemaphore.get(), nullptr, &imageIndex);
     switch (result)
     {
     case vk::Result::eSuccess:
@@ -100,7 +101,7 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
         1);		// layers
 
     currentResource.framebuffer =
-        m_deviceManager.GetDevice().createFramebufferUnique(frameBufferCreateInfo, nullptr, m_dispatcher);
+        m_deviceManager.GetDevice().createFramebufferUnique(frameBufferCreateInfo, nullptr);
 
     // set the render info
     {
@@ -116,7 +117,7 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
 
     // begin recording commands
     vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-    renderInfo.frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo, m_dispatcher);
+    renderInfo.frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo);
 
     // add memory barrier to change from the present queue to the graphics queue 
     vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
@@ -136,7 +137,7 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
             vk::PipelineStageFlagBits::eColorAttachmentOutput,
             vk::PipelineStageFlagBits::eColorAttachmentOutput,
             vk::DependencyFlags(),
-            nullptr, nullptr, barrierFromPresentToClear, m_dispatcher);
+            nullptr, nullptr, barrierFromPresentToClear);
     }
 
     // begin the render pass
@@ -150,7 +151,7 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
         renderInfo.frameInfo.framebuffer,
         renderArea,
         (uint32_t)clearValues.size(), clearValues.data());
-    renderInfo.frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline, m_dispatcher);
+    renderInfo.frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
     // update viewport and scissor
     {
@@ -167,8 +168,8 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
                 renderInfo.frameInfo.extent.height
             }
         };
-        renderInfo.frameInfo.drawCmdBuffer.setViewport(0, viewport, m_dispatcher);
-        renderInfo.frameInfo.drawCmdBuffer.setScissor(0, scissor, m_dispatcher);
+        renderInfo.frameInfo.drawCmdBuffer.setViewport(0, viewport);
+        renderInfo.frameInfo.drawCmdBuffer.setScissor(0, scissor);
     }
 
     stats.waitTime = std::chrono::duration<float, std::milli>(timer_commandStart - timer_waitStart).count();
@@ -179,7 +180,7 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
 SwapChainRenderer::RenderStatus
 SwapChainRenderer::RenderEnd(const RenderInfo& renderInfo, RenderStats& stats)
 {
-    renderInfo.frameInfo.drawCmdBuffer.endRenderPass(m_dispatcher);
+    renderInfo.frameInfo.drawCmdBuffer.endRenderPass();
 
     // add memory barrier to change from the graphics queue to the present queue 
     vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
@@ -199,10 +200,10 @@ SwapChainRenderer::RenderEnd(const RenderInfo& renderInfo, RenderStats& stats)
             vk::PipelineStageFlagBits::eColorAttachmentOutput,
             vk::PipelineStageFlagBits::eBottomOfPipe,
             vk::DependencyFlags(),
-            nullptr, nullptr, barrierFromClearToPresent, m_dispatcher);
+            nullptr, nullptr, barrierFromClearToPresent);
     }
 
-    renderInfo.frameInfo.drawCmdBuffer.end(m_dispatcher);
+    renderInfo.frameInfo.drawCmdBuffer.end();
 
     auto timer_queueStart = std::chrono::high_resolution_clock::now();
 
@@ -217,7 +218,7 @@ SwapChainRenderer::RenderEnd(const RenderInfo& renderInfo, RenderStats& stats)
             1, &currentResource.commandBuffer.get(),
             1, &currentResource.finishedRenderingSemaphore.get());
         m_deviceManager.GetGraphicsQueueInfo().queue.submit(
-            submitInfo, currentResource.fence.get(), m_dispatcher);
+            submitInfo, currentResource.fence.get());
     }
 
     auto timer_presentStart = std::chrono::high_resolution_clock::now();
@@ -238,7 +239,7 @@ SwapChainRenderer::RenderEnd(const RenderInfo& renderInfo, RenderStats& stats)
             VkPresentInfoKHR vkPresetInfo(presentInfo);
             // In FIFO, this is blocking potentially waiting for vsync to complete (instead of acquireNextImageKHR?)
             VkResult vkresult =
-                m_dispatcher.vkQueuePresentKHR(VkQueue(m_deviceManager.GetPresentQueueInfo().queue), &vkPresetInfo);
+                VulkanDispatcher::GetInstance().vkQueuePresentKHR(VkQueue(m_deviceManager.GetPresentQueueInfo().queue), &vkPresetInfo);
             switch (vkresult)
             {
             case VK_SUCCESS:
@@ -280,19 +281,19 @@ SwapChainRenderer::CreateRenderingResources(uint32_t numVirtualFrames)
         vk::CommandBufferAllocateInfo cmdBufferAllocateInfo(
             m_graphicsCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
         std::vector<vk::CommandBuffer> buffer = m_deviceManager.GetDevice().allocateCommandBuffers(
-            cmdBufferAllocateInfo, m_dispatcher);
+            cmdBufferAllocateInfo);
         vk::PoolFree<vk::Device, vk::CommandPool, VulkanDispatcher> deleter(
-            m_deviceManager.GetDevice(), m_graphicsCommandPool.get(), m_dispatcher);
+            m_deviceManager.GetDevice(), m_graphicsCommandPool.get());
         resources.commandBuffer = VulkanUtils::CommandBufferHandle(buffer.front(), deleter);
 
         vk::SemaphoreCreateInfo semaphoreCreateInfo;
         resources.finishedRenderingSemaphore = 
-            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr, m_dispatcher);
+            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr);
         resources.imageAvailableSemaphore = 
-            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr, m_dispatcher);
+            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr);
 
         vk::FenceCreateInfo fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
-        resources.fence = m_deviceManager.GetDevice().createFenceUnique(fenceCreateInfo, nullptr, m_dispatcher);
+        resources.fence = m_deviceManager.GetDevice().createFenceUnique(fenceCreateInfo, nullptr);
     }
 
     return true;
@@ -303,7 +304,7 @@ SwapChainRenderer::CreateSwapChain()
 {
     m_canDraw = false;
 
-    m_deviceManager.GetDevice().waitIdle(m_dispatcher);
+    m_deviceManager.GetDevice().waitIdle();
 
     // clear swap chain images
     m_swapChainInfo.imageRefs.clear();
@@ -313,7 +314,7 @@ SwapChainRenderer::CreateSwapChain()
     {
         const std::vector<vk::SurfaceFormatKHR>& surfaceFormats =
             m_deviceManager.GetPhysicalDevice().getSurfaceFormatsKHR(
-                m_deviceManager.GetPresentSurface(), m_dispatcher);
+                m_deviceManager.GetPresentSurface());
         HEPHAESTUS_LOG_ASSERT(!surfaceFormats.empty(), "Failed to find valid KHR surface format");
         desiredFormat = surfaceFormats[0];
         {
@@ -342,7 +343,7 @@ SwapChainRenderer::CreateSwapChain()
     vk::SurfaceTransformFlagBitsKHR desiredTransform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
     {
         vk::SurfaceCapabilitiesKHR surfaceCapabilities =
-            m_deviceManager.GetPhysicalDevice().getSurfaceCapabilitiesKHR(m_deviceManager.GetPresentSurface(), m_dispatcher);
+            m_deviceManager.GetPhysicalDevice().getSurfaceCapabilitiesKHR(m_deviceManager.GetPresentSurface());
         desiredImageCount =
             (surfaceCapabilities.maxImageCount > 0 && surfaceCapabilities.minImageCount + 1 > surfaceCapabilities.maxImageCount) ?
             surfaceCapabilities.maxImageCount : surfaceCapabilities.minImageCount + 1;
@@ -379,7 +380,7 @@ SwapChainRenderer::CreateSwapChain()
     vk::PresentModeKHR desiredPresentMode = (vk::PresentModeKHR) - 1;
     {
         const std::vector<vk::PresentModeKHR>& presentModes =
-            m_deviceManager.GetPhysicalDevice().getSurfacePresentModesKHR(m_deviceManager.GetPresentSurface(), m_dispatcher);
+            m_deviceManager.GetPhysicalDevice().getSurfacePresentModesKHR(m_deviceManager.GetPresentSurface());
 
         // FIFO present mode is always available
         // MAILBOX is the lowest latency V-Sync enabled mode (something like triple-buffering) so use it if available
@@ -436,14 +437,14 @@ SwapChainRenderer::CreateSwapChain()
         m_swapChainInfo.swapChainHandle.get());
 
     m_swapChainInfo.swapChainHandle = 
-        m_deviceManager.GetDevice().createSwapchainKHRUnique(swapChainCreateInfo, nullptr, m_dispatcher);
+        m_deviceManager.GetDevice().createSwapchainKHRUnique(swapChainCreateInfo, nullptr);
 
     // set swap chain images
     {
         m_swapChainInfo.format = desiredFormat.format;
         m_swapChainInfo.extent = desiredExtent;
         const std::vector<vk::Image>& images = m_deviceManager.GetDevice().getSwapchainImagesKHR(
-            m_swapChainInfo.swapChainHandle.get(), m_dispatcher);
+            m_swapChainInfo.swapChainHandle.get());
 
         for (vk::Image image : images)
             m_swapChainInfo.imageRefs.emplace_back(image);
@@ -462,7 +463,7 @@ SwapChainRenderer::CreateSwapChain()
                 { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
 
             imageInfo.view = 
-                m_deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr, m_dispatcher);
+                m_deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr);
         }
     }
 

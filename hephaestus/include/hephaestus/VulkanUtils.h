@@ -1,7 +1,6 @@
 #pragma once
 
 #include <hephaestus/Platform.h>
-#include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanPlatformConfig.h>
 
 #include <vector>
@@ -10,6 +9,7 @@
 namespace hephaestus
 {
 
+struct VulkanDispatcher;
 class VulkanDeviceManager;
 
 // Utilities for handling Vulkan objects
@@ -37,6 +37,13 @@ public:
     using PipelineHandle = vk::UniqueHandle<vk::Pipeline, hephaestus::VulkanDispatcher>;
     using PipelineLayoutHandle = vk::UniqueHandle<vk::PipelineLayout, hephaestus::VulkanDispatcher>;
     using DescriptorSetLayoutHandle = vk::UniqueHandle<vk::DescriptorSetLayout, hephaestus::VulkanDispatcher>;
+
+    static const uint32_t InvalidQueueIndex = UINT32_MAX;
+    struct QueueInfo
+    {
+        vk::Queue	queue = nullptr;
+        uint32_t	familyIndex = VulkanUtils::InvalidQueueIndex;
+    };
 
     // Container with info for recording draw commands during a frame update
     struct FrameUpdateInfo

@@ -1,6 +1,7 @@
 #include <hephaestus/VulkanDeviceManager.h>
 
 #include <hephaestus/Log.h>
+#include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanValidate.h>
 
 
@@ -8,7 +9,7 @@ namespace hephaestus
 {
 
 static 
-VKAPI_ATTR VkBool32 VKAPI_CALL s_debugCallback(
+VKAPI_ATTR VkBool32 VKAPI_CALL s_DebugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT /*messageType*/,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -67,7 +68,7 @@ VulkanDeviceManager::CreateInstance(bool enableValidationLayers)
     
     const std::vector<const char*>& instanceExtensions =
         GetInstanceRequiredExtensions(enableValidationLayers);
-    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckInstanceRequiredExtensions(instanceExtensions, m_dispatcher), 
+    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckInstanceRequiredExtensions(instanceExtensions), 
         "No support for required Vulkan extensions");
 
     // TODO: expose names as argument
@@ -77,14 +78,14 @@ VulkanDeviceManager::CreateInstance(bool enableValidationLayers)
     creationInfo.setPpEnabledExtensionNames(instanceExtensions.data());
     if (enableValidationLayers)
     {
-        HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckInstanceValidationLayerSupport(validationLayers, m_dispatcher),
+        HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckInstanceValidationLayerSupport(validationLayers),
             "No support for required Vulkan layer extensions");
         creationInfo.setEnabledLayerCount((uint32_t)validationLayers.size());
         creationInfo.setPpEnabledLayerNames(validationLayers.data());
     }
-    m_instance = vk::createInstanceUnique(creationInfo, nullptr, m_dispatcher);
+    m_instance = vk::createInstanceUnique(creationInfo, nullptr);
 
-    m_dispatcher.LoadInstanceFunctions(m_instance.get());
+    VulkanDispatcher::GetInstance().LoadInstanceFunctions(m_instance.get());
 
 
     if (enableValidationLayers)
@@ -99,10 +100,10 @@ VulkanDeviceManager::CreateInstance(bool enableValidationLayers)
             vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
             vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
             vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
-        messengerCreateInfo.pfnUserCallback = s_debugCallback;
+        messengerCreateInfo.pfnUserCallback = s_DebugCallback;
         messengerCreateInfo.pUserData = nullptr;
 
-        m_debugMessenger = m_instance->createDebugUtilsMessengerEXTUnique(messengerCreateInfo, nullptr, m_dispatcher);
+        m_debugMessenger = m_instance->createDebugUtilsMessengerEXTUnique(messengerCreateInfo, nullptr);
     }
 
     return true;
@@ -113,17 +114,17 @@ VulkanDeviceManager::CreateDevice(bool createPresentQueue /*= true*/)
 {
     HEPHAESTUS_LOG_ASSERT(m_instance, "Vulkan instance has not been initialized");
 
-    const std::vector<vk::PhysicalDevice>& physicalDevices = m_instance->enumeratePhysicalDevices(m_dispatcher);
+    const std::vector<vk::PhysicalDevice>& physicalDevices = m_instance->enumeratePhysicalDevices();
     if (physicalDevices.empty())
         return false;
 
     // TODO: pick the physical context.device with the desired extensions
     m_physicalDevice = physicalDevices[0];
 
-    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckPhysicalDevicePropertiesAndFeatures(m_physicalDevice, m_dispatcher),
+    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckPhysicalDevicePropertiesAndFeatures(m_physicalDevice),
         "No support for Vulkan physical device required properties and features");
     const std::vector<const char*>& deviceExtensions = GetDeviceRequiredExtensions();
-    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckPhysicalDeviceRequiredExtensions(deviceExtensions, m_physicalDevice, m_dispatcher),
+    HEPHAESTUS_LOG_ASSERT(VulkanValidate::CheckPhysicalDeviceRequiredExtensions(deviceExtensions, m_physicalDevice),
         "No support for Vulkan physical device required extensions");
 
     if (!SetupQueueFamilies(createPresentQueue))
@@ -145,9 +146,9 @@ VulkanDeviceManager::CreateDevice(bool createPresentQueue /*= true*/)
         deviceQueueCreateInfos.data());
     deviceCreateInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
     deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-    m_device = m_physicalDevice.createDeviceUnique(deviceCreateInfo, nullptr, m_dispatcher);
+    m_device = m_physicalDevice.createDeviceUnique(deviceCreateInfo, nullptr);
 
-    m_dispatcher.LoadDeviceFunctions(m_device.get());
+    VulkanDispatcher::GetInstance().LoadDeviceFunctions(m_device.get());
 
     return true;
 }
@@ -157,9 +158,9 @@ VulkanDeviceManager::CreateQueues(bool createPresentQueue /*= true*/)
 {
     HEPHAESTUS_LOG_ASSERT(m_device, "Vulkan device has not been initialized");
 
-    m_graphicsQueueInfo.queue = m_device->getQueue(m_graphicsQueueInfo.familyIndex, 0, m_dispatcher);
+    m_graphicsQueueInfo.queue = m_device->getQueue(m_graphicsQueueInfo.familyIndex, 0);
     if (createPresentQueue)
-        m_presentQueueInfo.queue = m_device->getQueue(m_presentQueueInfo.familyIndex, 0, m_dispatcher);
+        m_presentQueueInfo.queue = m_device->getQueue(m_presentQueueInfo.familyIndex, 0);
 
     return true;
 }
@@ -168,10 +169,10 @@ bool
 VulkanDeviceManager::SetupQueueFamilies(bool findPresentQueue /*= true*/)
 {
     // get the QueueFamilyProperties of the first PhysicalDevice
-    std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_physicalDevice.getQueueFamilyProperties(m_dispatcher);
+    std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_physicalDevice.getQueueFamilyProperties();
 
     // try to find a Queue family which supports both graphics & present
-    m_graphicsQueueInfo.familyIndex = m_presentQueueInfo.familyIndex = VulkanDeviceManager::InvalidQueueIndex;
+    m_graphicsQueueInfo.familyIndex = m_presentQueueInfo.familyIndex = VulkanUtils::InvalidQueueIndex;
     for (uint32_t queueFamilyIndex = 0; queueFamilyIndex < queueFamilyProperties.size(); ++queueFamilyIndex)
     {
         const vk::QueueFamilyProperties& qfp = queueFamilyProperties[queueFamilyIndex];
@@ -180,7 +181,7 @@ VulkanDeviceManager::SetupQueueFamilies(bool findPresentQueue /*= true*/)
 
         if (findPresentQueue)
         {
-            if (m_physicalDevice.getSurfaceSupportKHR(queueFamilyIndex, m_presentSurface.get(), m_dispatcher))
+            if (m_physicalDevice.getSurfaceSupportKHR(queueFamilyIndex, m_presentSurface.get()))
                 m_presentQueueInfo.familyIndex = queueFamilyIndex;
 
             if (m_graphicsQueueInfo.familyIndex < queueFamilyProperties.size() &&
@@ -208,7 +209,7 @@ void
 VulkanDeviceManager::WaitDevice() const
 {
     if (m_device)
-        m_device->waitIdle(m_dispatcher);
+        m_device->waitIdle();
 }
 
 void 
@@ -265,7 +266,7 @@ VulkanDeviceManager::CreatePresentSurface(HINSTANCE instance, HWND handle)
 
     vk::Win32SurfaceCreateInfoKHR surfaceInfo(
         vk::Win32SurfaceCreateFlagsKHR(), instance, handle);
-    m_presentSurface = m_instance->createWin32SurfaceKHRUnique(surfaceInfo, nullptr, m_dispatcher);
+    m_presentSurface = m_instance->createWin32SurfaceKHRUnique(surfaceInfo, nullptr);
 
     return true;
 }
@@ -279,7 +280,7 @@ VulkanDeviceManager::CreatePresentSurface(Display* display, Window handle)
 
     vk::XlibSurfaceCreateInfoKHR surfaceInfo(
         vk::XlibSurfaceCreateFlagsKHR(), display, handle);
-    m_presentSurface = m_instance->createXlibSurfaceKHRUnique(surfaceInfo, nullptr, m_dispatcher);
+    m_presentSurface = m_instance->createXlibSurfaceKHRUnique(surfaceInfo, nullptr);
 
     return true;
 }
@@ -293,7 +294,7 @@ VulkanDeviceManager::CreatePresentSurface(ANativeWindow* platformWindow)
     vk::AndroidSurfaceCreateInfoKHR surfaceInfo(
         vk::AndroidSurfaceCreateFlagsKHR(),
         platformWindow);
-    m_presentSurface = m_instance->createAndroidSurfaceKHRUnique(surfaceInfo, nullptr, m_dispatcher);
+    m_presentSurface = m_instance->createAndroidSurfaceKHRUnique(surfaceInfo, nullptr);
 
     return true;
 }

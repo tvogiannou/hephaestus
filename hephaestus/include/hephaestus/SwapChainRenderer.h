@@ -1,9 +1,9 @@
 #pragma once
 
 #include <hephaestus/Platform.h>
-#include <hephaestus/VulkanDeviceManager.h>
 #include <hephaestus/PipelineBase.h>
 #include <hephaestus/RendererBase.h>
+#include <hephaestus/VulkanDeviceManager.h>
 #include <hephaestus/VulkanUtils.h>
 
 #include <vector>

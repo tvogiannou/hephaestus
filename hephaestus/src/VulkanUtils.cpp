@@ -2,6 +2,7 @@
 
 #include <hephaestus/Log.h>
 #include <hephaestus/VulkanDeviceManager.h>
+#include <hephaestus/VulkanDispatcher.h>
 
 #include <fstream>
 #include <vector>
@@ -41,7 +42,7 @@ VulkanUtils::CreateShaderModule(const VulkanDeviceManager& deviceManager, const 
         vk::ShaderModuleCreateInfo createInfo(
             vk::ShaderModuleCreateFlags(), code.size(), (uint32_t*)code.data());
         return deviceManager.GetDevice().createShaderModuleUnique(
-            createInfo, nullptr, deviceManager.GetDispatcher());
+            createInfo, nullptr);
     }
     else
         HEPHAESTUS_LOG_WARNING("Failed to open shader file: %s", filename);
@@ -70,14 +71,14 @@ VulkanUtils::CreateDepthImage(const VulkanDeviceManager& deviceManager,
         vk::ImageLayout::eUndefined
     );
     depthImageInfo.imageHandle = 
-        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr, deviceManager.GetDispatcher());
+        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr);
 
     if (!VulkanUtils::AllocateImageMemory(
         deviceManager, vk::MemoryPropertyFlagBits::eDeviceLocal, depthImageInfo))
         return false;
 
     deviceManager.GetDevice().bindImageMemory(
-        depthImageInfo.imageHandle.get(), depthImageInfo.deviceMemory.get(), 0, deviceManager.GetDispatcher());
+        depthImageInfo.imageHandle.get(), depthImageInfo.deviceMemory.get(), 0);
 
     vk::ImageViewCreateInfo viewCreateInfo(
         vk::ImageViewCreateFlags(),
@@ -92,7 +93,7 @@ VulkanUtils::CreateDepthImage(const VulkanDeviceManager& deviceManager,
         },
         { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 });	// sub resource range
     depthImageInfo.view = 
-        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr, deviceManager.GetDispatcher());
+        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr);
 
     return true;
 }
@@ -111,12 +112,12 @@ VulkanUtils::CreateBuffer(const VulkanDeviceManager& deviceManager, uint32_t siz
         0, nullptr);								// queue family indices
 
     bufferInfo.bufferHandle = deviceManager.GetDevice().createBufferUnique(
-        bufferCreateInfo, nullptr, deviceManager.GetDispatcher());
+        bufferCreateInfo, nullptr);
     if (!VulkanUtils::AllocateBufferMemory(deviceManager, memoryProperty, bufferInfo))
         return false;
 
     deviceManager.GetDevice().bindBufferMemory(
-        bufferInfo.bufferHandle.get(), bufferInfo.deviceMemory.get(), 0, deviceManager.GetDispatcher());
+        bufferInfo.bufferHandle.get(), bufferInfo.deviceMemory.get(), 0);
 
     return true;
 }
@@ -127,9 +128,9 @@ VulkanUtils::AllocateBufferMemory(const VulkanDeviceManager& deviceManager,
 {
     vk::MemoryRequirements bufferMemoryRequirements = 
         deviceManager.GetDevice().getBufferMemoryRequirements(
-            bufferInfo.bufferHandle.get(), deviceManager.GetDispatcher());
+            bufferInfo.bufferHandle.get());
     vk::PhysicalDeviceMemoryProperties memoryProperties = 
-        deviceManager.GetPhysicalDevice().getMemoryProperties(deviceManager.GetDispatcher());
+        deviceManager.GetPhysicalDevice().getMemoryProperties();
 
     for (uint32_t memoryTypeIndex = 0; memoryTypeIndex < memoryProperties.memoryTypeCount; ++memoryTypeIndex)
     {
@@ -138,7 +139,7 @@ VulkanUtils::AllocateBufferMemory(const VulkanDeviceManager& deviceManager,
         {
             vk::MemoryAllocateInfo allocateInfo(bufferMemoryRequirements.size, memoryTypeIndex);
             bufferInfo.deviceMemory = deviceManager.GetDevice().allocateMemoryUnique(
-                allocateInfo, nullptr, deviceManager.GetDispatcher());
+                allocateInfo, nullptr);
             return true;
         }
     }
@@ -152,9 +153,9 @@ VulkanUtils::AllocateImageMemory(const VulkanDeviceManager& deviceManager,
 {
     vk::MemoryRequirements bufferMemoryRequirements =
         deviceManager.GetDevice().getImageMemoryRequirements(
-            imageInfo.imageHandle.get(), deviceManager.GetDispatcher());
+            imageInfo.imageHandle.get());
     vk::PhysicalDeviceMemoryProperties memoryProperties =
-        deviceManager.GetPhysicalDevice().getMemoryProperties(deviceManager.GetDispatcher());
+        deviceManager.GetPhysicalDevice().getMemoryProperties();
 
     for (uint32_t memoryTypeIndex = 0; memoryTypeIndex < memoryProperties.memoryTypeCount; ++memoryTypeIndex)
     {
@@ -163,7 +164,7 @@ VulkanUtils::AllocateImageMemory(const VulkanDeviceManager& deviceManager,
         {
             vk::MemoryAllocateInfo allocateInfo(bufferMemoryRequirements.size, memoryTypeIndex);
             imageInfo.deviceMemory = deviceManager.GetDevice().allocateMemoryUnique(
-                allocateInfo, nullptr, deviceManager.GetDispatcher());
+                allocateInfo, nullptr);
             return true;
         }
     }
@@ -190,14 +191,14 @@ VulkanUtils::CreateImageTextureInfo(const VulkanDeviceManager& deviceManager,
         vk::ImageLayout::eUndefined
     );
     textureInfo.imageHandle = 
-        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr, deviceManager.GetDispatcher());
+        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr);
 
     // allocate memory for image
     if (!VulkanUtils::AllocateImageMemory(deviceManager, vk::MemoryPropertyFlagBits::eDeviceLocal, textureInfo))
         return false;
 
     deviceManager.GetDevice().bindImageMemory(
-        textureInfo.imageHandle.get(), textureInfo.deviceMemory.get(), 0, deviceManager.GetDispatcher());
+        textureInfo.imageHandle.get(), textureInfo.deviceMemory.get(), 0);
 
     vk::ImageViewCreateInfo viewCreateInfo(
         vk::ImageViewCreateFlags(),
@@ -212,7 +213,7 @@ VulkanUtils::CreateImageTextureInfo(const VulkanDeviceManager& deviceManager,
         },
         { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });	// sub resource range
     textureInfo.view = 
-        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr, deviceManager.GetDispatcher());
+        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr);
 
     vk::SamplerCreateInfo samplerCreateInfo(
         vk::SamplerCreateFlags(),
@@ -228,7 +229,7 @@ VulkanUtils::CreateImageTextureInfo(const VulkanDeviceManager& deviceManager,
         vk::BorderColor::eFloatTransparentBlack,
         VK_FALSE);									// un normalized coords
     textureInfo.sampler = deviceManager.GetDevice().createSamplerUnique(
-        samplerCreateInfo, nullptr, deviceManager.GetDispatcher());
+        samplerCreateInfo, nullptr);
 
     return true;
 }
@@ -249,8 +250,7 @@ VulkanUtils::CopyBufferDataStage(const VulkanDeviceManager& deviceManager, const
             stageBufferInfo.deviceMemory.get(),
             0,				// offset
             updateInfo.dataSize,
-            vk::MemoryMapFlags(),
-            deviceManager.GetDispatcher());
+            vk::MemoryMapFlags());
         if (stageBufferPtr == nullptr)
             return false;
         std::memcpy(stageBufferPtr, updateInfo.data, updateInfo.dataSize);
@@ -261,21 +261,21 @@ VulkanUtils::CopyBufferDataStage(const VulkanDeviceManager& deviceManager, const
             0, 
             updateInfo.dataSize 
         };
-        deviceManager.GetDevice().flushMappedMemoryRanges(flushRange, deviceManager.GetDispatcher());
+        deviceManager.GetDevice().flushMappedMemoryRanges(flushRange);
 
-        deviceManager.GetDevice().unmapMemory(stageBufferInfo.deviceMemory.get(), deviceManager.GetDispatcher());
+        deviceManager.GetDevice().unmapMemory(stageBufferInfo.deviceMemory.get());
     }
 
     // use temporarily a command buffer to copy the data to the device local buffer
     {
         vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-        updateInfo.copyCmdBuffer.begin(beginInfo, deviceManager.GetDispatcher());
+        updateInfo.copyCmdBuffer.begin(beginInfo);
 
         vk::BufferCopy copyInfo(0, dstBufferOffset, updateInfo.dataSize);
         updateInfo.copyCmdBuffer.copyBuffer(
             stageBufferInfo.bufferHandle.get(),
             dstBufferInfo.bufferHandle.get(),
-            copyInfo, deviceManager.GetDispatcher());
+            copyInfo);
 
         // memory barrier to change access after the copy
         vk::BufferMemoryBarrier bufferMemoryBarrier(
@@ -291,10 +291,9 @@ VulkanUtils::CopyBufferDataStage(const VulkanDeviceManager& deviceManager, const
             vk::DependencyFlags(),
             nullptr,
             bufferMemoryBarrier,
-            nullptr,
-            deviceManager.GetDispatcher());
+            nullptr);
 
-        updateInfo.copyCmdBuffer.end(deviceManager.GetDispatcher());
+        updateInfo.copyCmdBuffer.end();
     }
 
     // submit & wait for the queue now to finish the copy
@@ -303,9 +302,9 @@ VulkanUtils::CopyBufferDataStage(const VulkanDeviceManager& deviceManager, const
         nullptr,
         1, &updateInfo.copyCmdBuffer,
         0, nullptr);
-    deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, nullptr, deviceManager.GetDispatcher());
+    deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, nullptr);
 
-    deviceManager.GetDevice().waitIdle(deviceManager.GetDispatcher());
+    deviceManager.GetDevice().waitIdle();
 
     return true;
 }
@@ -324,22 +323,21 @@ VulkanUtils::CopyImageDataStage(const VulkanDeviceManager& deviceManager, const 
             stageBufferInfo.deviceMemory.get(),
             0,	// offset
             textureUpdateInfo.dataSize,
-            vk::MemoryMapFlags(),
-            deviceManager.GetDispatcher());
+            vk::MemoryMapFlags());
         if (stageBufferPtr == nullptr)
             return false;
         std::memcpy(stageBufferPtr, textureUpdateInfo.data, textureUpdateInfo.dataSize);
 
         vk::MappedMemoryRange flushRange = { stageBufferInfo.deviceMemory.get(), 0, VK_WHOLE_SIZE };
-        deviceManager.GetDevice().flushMappedMemoryRanges(flushRange, deviceManager.GetDispatcher());
+        deviceManager.GetDevice().flushMappedMemoryRanges(flushRange);
         deviceManager.GetDevice().unmapMemory(
-            stageBufferInfo.deviceMemory.get(), deviceManager.GetDispatcher());
+            stageBufferInfo.deviceMemory.get());
     }
 
     // use temporarily a command buffer to write to the device image
     {
         vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-        textureUpdateInfo.copyCmdBuffer.begin(beginInfo, deviceManager.GetDispatcher());
+        textureUpdateInfo.copyCmdBuffer.begin(beginInfo);
 
         vk::ImageSubresourceRange imageSubresourceRange(
             vk::ImageAspectFlagBits::eColor,
@@ -361,8 +359,7 @@ VulkanUtils::CopyImageDataStage(const VulkanDeviceManager& deviceManager, const 
                 vk::DependencyFlags(),
                 nullptr,
                 nullptr,
-                barrierFromUndefinedToTransferDst,
-                deviceManager.GetDispatcher());
+                barrierFromUndefinedToTransferDst);
         }
 
         vk::BufferImageCopy copyInfo(
@@ -374,7 +371,7 @@ VulkanUtils::CopyImageDataStage(const VulkanDeviceManager& deviceManager, const 
             stageBufferInfo.bufferHandle.get(),
             imageInfo.imageHandle.get(),
             vk::ImageLayout::eTransferDstOptimal,
-            copyInfo, deviceManager.GetDispatcher());
+            copyInfo);
 
         // memory barrier to change access after the copy
         {
@@ -393,11 +390,10 @@ VulkanUtils::CopyImageDataStage(const VulkanDeviceManager& deviceManager, const 
                 vk::DependencyFlags(),
                 nullptr,
                 nullptr,
-                barrierFromTransferToShader,
-                deviceManager.GetDispatcher());
+                barrierFromTransferToShader);
         }
 
-        textureUpdateInfo.copyCmdBuffer.end(deviceManager.GetDispatcher());
+        textureUpdateInfo.copyCmdBuffer.end();
     }
 
     // submit queue now to do the copy
@@ -406,9 +402,9 @@ VulkanUtils::CopyImageDataStage(const VulkanDeviceManager& deviceManager, const 
         nullptr,
         1, &textureUpdateInfo.copyCmdBuffer,
         0, nullptr);
-    deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, nullptr, deviceManager.GetDispatcher());
+    deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, nullptr);
 
-    deviceManager.GetDevice().waitIdle(deviceManager.GetDispatcher());
+    deviceManager.GetDevice().waitIdle();
 
     return true;
 }
@@ -424,8 +420,7 @@ VulkanUtils::CopyBufferDataHost(const VulkanDeviceManager& deviceManager,
         dstBufferInfo.deviceMemory.get(),
         dstBufferOffset,				// offset
         updateInfo.dataSize,
-        vk::MemoryMapFlags(),
-        deviceManager.GetDispatcher());
+        vk::MemoryMapFlags());
     if (mappedMemPtr == nullptr)
         return false;
     std::memcpy(mappedMemPtr, updateInfo.data, updateInfo.dataSize);
@@ -437,9 +432,9 @@ VulkanUtils::CopyBufferDataHost(const VulkanDeviceManager& deviceManager,
         dstBufferOffset, 
         updateInfo.dataSize 
     };
-    deviceManager.GetDevice().flushMappedMemoryRanges(flushRange, deviceManager.GetDispatcher());
+    deviceManager.GetDevice().flushMappedMemoryRanges(flushRange);
 
-    deviceManager.GetDevice().unmapMemory(dstBufferInfo.deviceMemory.get(), deviceManager.GetDispatcher());
+    deviceManager.GetDevice().unmapMemory(dstBufferInfo.deviceMemory.get());
 
     return true;
 }
@@ -457,7 +452,7 @@ VulkanUtils::CreateDescriptorPool(const VulkanDeviceManager& deviceManager,
         (uint32_t)poolSizes.size(), poolSizes.data());
 
     descriptorPool = deviceManager.GetDevice().createDescriptorPoolUnique(
-        poolCreateInfo, nullptr, deviceManager.GetDispatcher());
+        poolCreateInfo, nullptr);
 
     return true;
 }
@@ -528,7 +523,7 @@ VulkanUtils::CreateRenderPass(const VulkanDeviceManager& deviceManager,
         (uint32_t)dependencies.size(), dependencies.data());
 
     renderPass = deviceManager.GetDevice().createRenderPassUnique(
-        renderPassCreateInfo, nullptr, deviceManager.GetDispatcher());
+        renderPassCreateInfo, nullptr);
 
     return true;
 }
@@ -538,7 +533,7 @@ uint32_t
 VulkanUtils::FixupFlushRange(const VulkanDeviceManager& deviceManager, uint32_t size)
 {
     const vk::PhysicalDeviceProperties& properties = 
-        deviceManager.GetPhysicalDevice().getProperties(deviceManager.GetDispatcher());
+        deviceManager.GetPhysicalDevice().getProperties();
     const uint32_t atomSize = (uint32_t)properties.limits.nonCoherentAtomSize;
 
     return (size + atomSize - 1) & (~(atomSize - 1));

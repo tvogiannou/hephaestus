@@ -14,11 +14,9 @@ namespace hephaestus
 
 // static
 bool 
-VulkanValidate::CheckInstanceValidationLayerSupport(
-    const std::vector<const char*>& validationLayers, 
-    const VulkanDispatcher& dispatcher)
+VulkanValidate::CheckInstanceValidationLayerSupport(const std::vector<const char*>& validationLayers)
 {
-    std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties(dispatcher);
+    std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
 
     for (const char* layerName : validationLayers)
     {
@@ -40,12 +38,10 @@ VulkanValidate::CheckInstanceValidationLayerSupport(
 
 //static 
 bool 
-VulkanValidate::CheckInstanceRequiredExtensions(
-    const std::vector<const char*>& instanceExtensions, 
-    const VulkanDispatcher& dispatcher)
+VulkanValidate::CheckInstanceRequiredExtensions(const std::vector<const char*>& instanceExtensions)
 {
     std::vector<vk::ExtensionProperties> instanceExtensionProperties = 
-                        vk::enumerateInstanceExtensionProperties(nullptr, dispatcher);
+                        vk::enumerateInstanceExtensionProperties(nullptr);
 
     for (const char* extensionName : instanceExtensions)
     {
@@ -73,13 +69,12 @@ VulkanValidate::CheckInstanceRequiredExtensions(
 bool 
 VulkanValidate::CheckPhysicalDeviceRequiredExtensions(
     const std::vector<const char*>& deviceExtensions,
-    const vk::PhysicalDevice& physicalDevice,
-    const VulkanDispatcher& dispatcher)
+    const vk::PhysicalDevice& physicalDevice)
 {
     HEPHAESTUS_LOG_ASSERT(physicalDevice, "No Vulkan physical device available");
     
     std::vector<vk::ExtensionProperties> instanceExtensionProperties =
-        physicalDevice.enumerateDeviceExtensionProperties(nullptr, dispatcher);
+        physicalDevice.enumerateDeviceExtensionProperties(nullptr);
 
     for (const char* extensionName : deviceExtensions)
     {
@@ -106,12 +101,11 @@ VulkanValidate::CheckPhysicalDeviceRequiredExtensions(
 //static 
 bool 
 VulkanValidate::CheckPhysicalDevicePropertiesAndFeatures(
-    const vk::PhysicalDevice& physicalDevice, 
-    const VulkanDispatcher& dispatcher)
+    const vk::PhysicalDevice& physicalDevice)
 {
     HEPHAESTUS_LOG_ASSERT(physicalDevice, "No Vulkan physical device available");
 
-    const vk::PhysicalDeviceProperties& properties = physicalDevice.getProperties(dispatcher);
+    const vk::PhysicalDeviceProperties& properties = physicalDevice.getProperties();
     //const vk::PhysicalDeviceFeatures& features = physicalDevice.getFeatures(dispatcher);
 
     const uint32_t major_version = VK_VERSION_MAJOR( properties.apiVersion );

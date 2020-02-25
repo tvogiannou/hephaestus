@@ -2,6 +2,7 @@
 
 #include <hephaestus/Log.h>
 #include <hephaestus/PipelineBase.h>
+#include <hephaestus/VulkanDispatcher.h>
 
 
 namespace hephaestus
@@ -41,7 +42,7 @@ HeadlessRenderer::Init(const InitInfo& info)
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
 
         m_frameImageInfo.imageHandle = m_deviceManager.GetDevice().createImageUnique(
-            imageCreateInfo, nullptr, m_deviceManager.GetDispatcher());
+            imageCreateInfo, nullptr);
 
         // allocate memory for image
         if (!VulkanUtils::AllocateImageMemory(
@@ -49,7 +50,7 @@ HeadlessRenderer::Init(const InitInfo& info)
             return false;
 
         m_deviceManager.GetDevice().bindImageMemory(
-            m_frameImageInfo.imageHandle.get(), m_frameImageInfo.deviceMemory.get(), 0, m_deviceManager.GetDispatcher());
+            m_frameImageInfo.imageHandle.get(), m_frameImageInfo.deviceMemory.get(), 0);
 
         vk::ImageViewCreateInfo viewCreateInfo;
         viewCreateInfo.viewType = vk::ImageViewType::e2D;
@@ -63,7 +64,7 @@ HeadlessRenderer::Init(const InitInfo& info)
         viewCreateInfo.image = m_frameImageInfo.imageHandle.get();
 
         m_frameImageInfo.view = m_deviceManager.GetDevice().createImageViewUnique(
-            viewCreateInfo, nullptr, m_deviceManager.GetDispatcher());
+            viewCreateInfo, nullptr);
     }
 
     // create framebuffer
@@ -83,7 +84,7 @@ HeadlessRenderer::Init(const InitInfo& info)
             1);		// layers
 
         m_framebuffer = m_deviceManager.GetDevice().createFramebufferUnique(
-            frameBufferCreateInfo, nullptr, m_deviceManager.GetDispatcher());
+            frameBufferCreateInfo, nullptr);
     }
 
     // create destination image buffer
@@ -102,7 +103,7 @@ HeadlessRenderer::Init(const InitInfo& info)
         imageCreateInfo.usage = vk::ImageUsageFlagBits::eTransferDst;
 
         m_dstImageInfo.imageHandle = m_deviceManager.GetDevice().createImageUnique(
-            imageCreateInfo, nullptr, m_deviceManager.GetDispatcher());
+            imageCreateInfo, nullptr);
 
         // allocate memory for image
         // VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
@@ -111,7 +112,7 @@ HeadlessRenderer::Init(const InitInfo& info)
             return false;
 
         m_deviceManager.GetDevice().bindImageMemory(
-            m_dstImageInfo.imageHandle.get(), m_dstImageInfo.deviceMemory.get(), 0, m_deviceManager.GetDispatcher());
+            m_dstImageInfo.imageHandle.get(), m_dstImageInfo.deviceMemory.get(), 0);
     }
 
     return true;
@@ -147,7 +148,7 @@ HeadlessRenderer::RenderBegin(VulkanUtils::FrameUpdateInfo& frameInfo) const
 
     // begin recording commands
     vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-    frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo, m_deviceManager.GetDispatcher());
+    frameInfo.drawCmdBuffer.begin(cmdBufferBeginInfo);
 
     // begin the render pass
     std::array<float, 4> colorClearValues = m_colorClearValues;
@@ -160,7 +161,7 @@ HeadlessRenderer::RenderBegin(VulkanUtils::FrameUpdateInfo& frameInfo) const
         frameInfo.framebuffer,
         renderArea,
         (uint32_t)clearValues.size(), clearValues.data());
-    frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline, m_deviceManager.GetDispatcher());
+    frameInfo.drawCmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
     // update viewport and scissor
     {
@@ -177,8 +178,8 @@ HeadlessRenderer::RenderBegin(VulkanUtils::FrameUpdateInfo& frameInfo) const
                 frameInfo.extent.height
             }
         };
-        frameInfo.drawCmdBuffer.setViewport(0, viewport, m_deviceManager.GetDispatcher());
-        frameInfo.drawCmdBuffer.setScissor(0, scissor, m_deviceManager.GetDispatcher());
+        frameInfo.drawCmdBuffer.setViewport(0, viewport);
+        frameInfo.drawCmdBuffer.setScissor(0, scissor);
     }
 
     return true;
@@ -187,15 +188,15 @@ HeadlessRenderer::RenderBegin(VulkanUtils::FrameUpdateInfo& frameInfo) const
 bool 
 HeadlessRenderer::RenderEnd(const VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
-    frameInfo.drawCmdBuffer.endRenderPass(m_deviceManager.GetDispatcher());
-    frameInfo.drawCmdBuffer.end(m_deviceManager.GetDispatcher());
+    frameInfo.drawCmdBuffer.endRenderPass();
+    frameInfo.drawCmdBuffer.end();
 
     // submit graphics queue
     {
         vk::FenceCreateInfo fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
         VulkanUtils::FenceHandle fence = m_deviceManager.GetDevice().createFenceUnique(
-            fenceCreateInfo, nullptr, m_deviceManager.GetDispatcher());
-        m_deviceManager.GetDevice().resetFences(fence.get(), m_deviceManager.GetDispatcher());
+            fenceCreateInfo, nullptr);
+        m_deviceManager.GetDevice().resetFences(fence.get());
 
         //vk::PipelineStageFlags waitDstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         vk::SubmitInfo submitInfo(
@@ -203,10 +204,10 @@ HeadlessRenderer::RenderEnd(const VulkanUtils::FrameUpdateInfo& frameInfo) const
             nullptr,
             1, &m_cmdBuffer.get(),
             0, nullptr);
-        m_deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, fence.get(), m_deviceManager.GetDispatcher());
-        //m_deviceManager.GetDevice().waitForFences(fence.get(), VK_TRUE, UINT64_MAX, m_deviceManager.GetDispatcher());
+        m_deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, fence.get());
+        //m_deviceManager.GetDevice().waitForFences(fence.get(), VK_TRUE, UINT64_MAX);
         if (m_deviceManager.GetDevice().waitForFences(
-            fence.get(), VK_TRUE, UINT64_MAX, m_deviceManager.GetDispatcher()) != vk::Result::eSuccess)
+            fence.get(), VK_TRUE, UINT64_MAX) != vk::Result::eSuccess)
             return false;
     }
 
@@ -223,7 +224,7 @@ HeadlessRenderer::CopyRenderFrame() const
 
     // Do the actual blit from the offscreen image to our host visible destination image
     vk::CommandBufferBeginInfo cmdBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-    m_cmdBuffer.get().begin(cmdBufferBeginInfo, m_deviceManager.GetDispatcher());
+    m_cmdBuffer.get().begin(cmdBufferBeginInfo);
 
     // Transition destination image to transfer destination layout
     {
@@ -243,7 +244,7 @@ HeadlessRenderer::CopyRenderFrame() const
             vk::PipelineStageFlagBits::eTransfer,
             vk::PipelineStageFlagBits::eTransfer,
             vk::DependencyFlags(),
-            nullptr, nullptr, barrierFromLinearToTransfer, m_deviceManager.GetDispatcher());
+            nullptr, nullptr, barrierFromLinearToTransfer);
     }
 
     // colorAttachment.image is already in VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, and does not need to be transitioned
@@ -260,7 +261,7 @@ HeadlessRenderer::CopyRenderFrame() const
     m_cmdBuffer.get().copyImage(
         m_frameImageInfo.imageHandle.get(), vk::ImageLayout::eTransferSrcOptimal,
         m_dstImageInfo.imageHandle.get(), vk::ImageLayout::eTransferDstOptimal,
-        imageCopyRegion, m_deviceManager.GetDispatcher());
+        imageCopyRegion);
 
     // Transition destination image to general layout, which is the required layout for mapping the image memory later on
     {
@@ -280,10 +281,10 @@ HeadlessRenderer::CopyRenderFrame() const
             vk::PipelineStageFlagBits::eTransfer,
             vk::PipelineStageFlagBits::eTransfer,
             vk::DependencyFlags(),
-            nullptr, nullptr, barrierFromLinearToTransfer, m_deviceManager.GetDispatcher());
+            nullptr, nullptr, barrierFromLinearToTransfer);
     }
 
-    m_cmdBuffer.get().end(m_deviceManager.GetDispatcher());
+    m_cmdBuffer.get().end();
 
     // submit & wait for the queue now to finish the copy
     vk::SubmitInfo submitInfo(
@@ -291,10 +292,9 @@ HeadlessRenderer::CopyRenderFrame() const
         nullptr,
         1, &m_cmdBuffer.get(),
         0, nullptr);
-    m_deviceManager.GetGraphicsQueueInfo().queue.submit(
-        submitInfo, nullptr, m_deviceManager.GetDispatcher());
+    m_deviceManager.GetGraphicsQueueInfo().queue.submit(submitInfo, nullptr);
 
-    m_deviceManager.GetDevice().waitIdle(m_deviceManager.GetDispatcher());
+    m_deviceManager.GetDevice().waitIdle();
 }
 
 bool 
@@ -317,11 +317,11 @@ HeadlessRenderer::GetDstImageData(char* data) const
     vk::SubresourceLayout subResourceLayout;
 
     m_deviceManager.GetDevice().getImageSubresourceLayout(
-        m_dstImageInfo.imageHandle.get(), &subResource, &subResourceLayout, m_deviceManager.GetDispatcher());
+        m_dstImageInfo.imageHandle.get(), &subResource, &subResourceLayout);
 
     // Map image memory so we can start copying from it
     const char* imagedata = reinterpret_cast<const char*>(m_deviceManager.GetDevice().mapMemory(
-        m_dstImageInfo.deviceMemory.get(), 0, VK_WHOLE_SIZE, vk::MemoryMapFlags(), m_deviceManager.GetDispatcher()));
+        m_dstImageInfo.deviceMemory.get(), 0, VK_WHOLE_SIZE, vk::MemoryMapFlags()));
     imagedata += subResourceLayout.offset;
 
     // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
