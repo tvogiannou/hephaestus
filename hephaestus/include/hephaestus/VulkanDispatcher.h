@@ -11,9 +11,8 @@ namespace hephaestus
 
 // Dispatcher to be used with Vulkan.hpp objects so that Vulkan functions can be loaded dynamically
 // See DispatchLoaderDynamic in vulkan.hpp for available functions (per platform)
-class VulkanDispatcher
+struct VulkanDispatcher
 {
-public:
 
 #ifdef HEPHAESTUS_PLATFORM_WIN32
     typedef HMODULE ModuleType; // win32
@@ -23,10 +22,12 @@ public:
     typedef void* ModuleType;
 #endif
 
-    void InitFromLibrary(ModuleType vulkanLibrary);
-    void LoadGlobalFunctions();
-    void LoadInstanceFunctions(const vk::Instance& instance);
-    void LoadDeviceFunctions(const vk::Device& device);
+    static VulkanDispatcher& GetInstance();
+
+    static void InitFromLibrary(ModuleType vulkanLibrary);
+    static void LoadGlobalFunctions();
+    static void LoadInstanceFunctions(const vk::Instance& instance);
+    static void LoadDeviceFunctions(const vk::Device& device);
 
 
     // always exported functions

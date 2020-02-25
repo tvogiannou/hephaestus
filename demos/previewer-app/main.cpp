@@ -284,8 +284,6 @@ int main(/*int argc, char** argv*/)
         createInfo.startY = 20u;
         CHECK_EXIT_MSG(window.Create(createInfo), "Failed to create Window");
 
-        hephaestus::VulkanDispatcher dispatcher;
-
         // Imgui setup
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -294,10 +292,10 @@ int main(/*int argc, char** argv*/)
             "Failed to initialize ImGui with GLFW and Vulkan");
 
         // Vulkan Setup
-        dispatcher.InitFromLibrary(vulkanLib);
-        dispatcher.LoadGlobalFunctions();
+        hephaestus::VulkanDispatcher::InitFromLibrary(vulkanLib);
+        hephaestus::VulkanDispatcher::LoadGlobalFunctions();
 
-        hephaestus::VulkanDeviceManager deviceManager(dispatcher);
+        hephaestus::VulkanDeviceManager deviceManager(hephaestus::VulkanDispatcher::GetInstance());
         {
             hephaestus::VulkanDeviceManager::PlatformWindowInfo platformWindowInfo;
 #ifdef HEPHAESTUS_PLATFORM_WIN32

@@ -10,7 +10,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}) # set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 
-set(HEPHAESTUS_VULKAN_HEADERS_DIR "${CMAKE_CURRENT_LIST_DIR}/../external/vulkan-1.1.92")
+set(HEPHAESTUS_VULKAN_HEADERS_DIR "${CMAKE_CURRENT_LIST_DIR}/../external/vulkan-1.2.133")
 include(${CMAKE_CURRENT_LIST_DIR}/hephaestus.cmake)
 
 # compiler flags

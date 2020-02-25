@@ -10,7 +10,7 @@ class PhysicalDevice;
 
 namespace hephaestus
 {
-class VulkanDispatcher;
+struct VulkanDispatcher;
 
 // Utils class with methods to check for required Vulkan extensions and features
 class VulkanValidate

@@ -5,6 +5,7 @@
 // Utility header to forward to appropiate platform
 // Should be included by files using Vulkan instead of including Vulkan headers directly
 
+// platform specific configuration
 #ifdef HEPHAESTUS_PLATFORM_WIN32
     #include <Windows.h>
     #define VK_USE_PLATFORM_WIN32_KHR
@@ -24,5 +25,16 @@
 #else
     static_assert(false, "Unsupported platform");
 #endif
+
+
+// Vulkan configuration
+// forward our dispatcher as the default one
+namespace hephaestus
+{
+    struct VulkanDispatcher;
+}
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::hephaestus::VulkanDispatcher
+#define VULKAN_HPP_DEFAULT_DISPATCHER hephaestus::VulkanDispatcher::GetInstance()
 
 #include <vulkan/vulkan.hpp>

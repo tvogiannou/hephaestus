@@ -57,14 +57,13 @@ int main()
     }
 
     // create the dispatcher for the loaded Vulkan functions
-    hephaestus::VulkanDispatcher dispatcher;
     {
-        dispatcher.InitFromLibrary(s_vulkanLib);
-        dispatcher.LoadGlobalFunctions();
+        hephaestus::VulkanDispatcher::InitFromLibrary(s_vulkanLib);
+        hephaestus::VulkanDispatcher::LoadGlobalFunctions();
     }
 
     // create the device manager
-    hephaestus::VulkanDeviceManager deviceManager(dispatcher);
+    hephaestus::VulkanDeviceManager deviceManager(hephaestus::VulkanDispatcher::GetInstance());
     {
         // setup the manager for headless rendering
         constexpr bool enableValidationLayers = true;

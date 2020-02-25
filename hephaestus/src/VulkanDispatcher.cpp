@@ -4,34 +4,44 @@
 #include <hephaestus/Log.h>
 
 
-#define HEPHAESTUS_VK_DISPATCHER_LOAD_GLOBAL_FUNCTION(fun) fun = (PFN_##fun)vkGetInstanceProcAddr(nullptr, #fun)
-#define HEPHAESTUS_VK_DISPATCHER_LOAD_OBJECT_FUNCTION(fun, object) fun = (PFN_##fun)object.getProcAddr(#fun, *this)
+
+#define HEPHAESTUS_VK_DISPATCHER_LOAD_GLOBAL_FUNCTION(fun) VulkanDispatcher::GetInstance().fun = \
+    (PFN_##fun)VulkanDispatcher::GetInstance().vkGetInstanceProcAddr(nullptr, #fun)
+#define HEPHAESTUS_VK_DISPATCHER_LOAD_OBJECT_FUNCTION(fun, object) VulkanDispatcher::GetInstance().fun = \
+    (PFN_##fun)object.getProcAddr(#fun, VulkanDispatcher::GetInstance())
 
 namespace hephaestus
 {
 
+hephaestus::VulkanDispatcher s_dispatcherInstance;
+
+VulkanDispatcher& VulkanDispatcher::GetInstance()
+{
+    return s_dispatcherInstance;
+}
+
 void 
 VulkanDispatcher::InitFromLibrary(ModuleType vulkanLibrary)
 {
-    HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr == 0, "vkGetInstanceProcAddr should not be set");
+    HEPHAESTUS_LOG_ASSERT(s_dispatcherInstance.vkGetInstanceProcAddr == 0, "vkGetInstanceProcAddr should not be set");
 
 #ifdef HEPHAESTUS_PLATFORM_WIN32
-    vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)GetProcAddress(vulkanLibrary, "vkGetInstanceProcAddr");
+    s_dispatcherInstance.vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)GetProcAddress(vulkanLibrary, "vkGetInstanceProcAddr");
 #elif defined(HEPHAESTUS_PLATFORM_LINUX)
-    vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)dlsym(vulkanLibrary, "vkGetInstanceProcAddr");
+    s_dispatcherInstance.vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)dlsym(vulkanLibrary, "vkGetInstanceProcAddr");
 #elif defined(HEPHAESTUS_PLATFORM_ANDROID)
-    vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)dlsym(vulkanLibrary, "vkGetInstanceProcAddr");
+    s_dispatcherInstance.vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)dlsym(vulkanLibrary, "vkGetInstanceProcAddr");
 #else
     static_assert(false, "VulkanFunctionDispatcher: Unknown platform configuration");
 #endif
 
-    HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr, "Failed to get vkGetInstanceProcAddr");
+    HEPHAESTUS_LOG_ASSERT(s_dispatcherInstance.vkGetInstanceProcAddr, "Failed to get vkGetInstanceProcAddr");
 }
 
 void 
 VulkanDispatcher::LoadGlobalFunctions()
 {
-    HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr, "Dispatcher has not been initialized");
+    HEPHAESTUS_LOG_ASSERT(s_dispatcherInstance.vkGetInstanceProcAddr, "Dispatcher has not been initialized");
 
     HEPHAESTUS_VK_DISPATCHER_LOAD_GLOBAL_FUNCTION(vkCreateInstance);
     HEPHAESTUS_VK_DISPATCHER_LOAD_GLOBAL_FUNCTION(vkEnumerateInstanceVersion);
@@ -42,7 +52,7 @@ VulkanDispatcher::LoadGlobalFunctions()
 void 
 VulkanDispatcher::LoadInstanceFunctions(const vk::Instance& instance)
 {
-    HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr, "Dispatcher has not been initialized");
+    HEPHAESTUS_LOG_ASSERT(s_dispatcherInstance.vkGetInstanceProcAddr, "Dispatcher has not been initialized");
 
     HEPHAESTUS_VK_DISPATCHER_LOAD_OBJECT_FUNCTION(vkEnumeratePhysicalDevices, instance);
     HEPHAESTUS_VK_DISPATCHER_LOAD_OBJECT_FUNCTION(vkGetPhysicalDeviceProperties, instance);
@@ -75,7 +85,7 @@ VulkanDispatcher::LoadInstanceFunctions(const vk::Instance& instance)
 void 
 VulkanDispatcher::LoadDeviceFunctions(const vk::Device& device)
 {
-    HEPHAESTUS_LOG_ASSERT(vkGetInstanceProcAddr, "Dispatcher has not been initialized");
+    HEPHAESTUS_LOG_ASSERT(s_dispatcherInstance.vkGetInstanceProcAddr, "Dispatcher has not been initialized");
 
     HEPHAESTUS_VK_DISPATCHER_LOAD_OBJECT_FUNCTION(vkGetDeviceQueue,device);
     HEPHAESTUS_VK_DISPATCHER_LOAD_OBJECT_FUNCTION(vkDeviceWaitIdle, device);
