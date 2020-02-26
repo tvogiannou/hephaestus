@@ -10,7 +10,7 @@
 
 namespace hephaestus
 {
-// Base class acting as a helper for all graphics pipelines
+// Base class acting as a helper for writing graphics pipelines
 // - stage buffer to re-use
 // - vertex buffer
 // - descriptor pool

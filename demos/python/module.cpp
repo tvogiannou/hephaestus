@@ -22,7 +22,6 @@ enum ShaderType
 };
 
 hephaestus::VulkanDispatcher::ModuleType s_vulkanLib = (hephaestus::VulkanDispatcher::ModuleType)nullptr;
-hephaestus::VulkanDispatcher s_dispatcher;
 
 // container so that we can explicitly delete the data before exit()
 struct VulkanSystemInfo
@@ -35,7 +34,7 @@ struct VulkanSystemInfo
     static VulkanSystemInfo& GetInstance()
     {
         if (!s_instance)
-            s_instance = new VulkanSystemInfo(hephaestus_bindings_globals::s_dispatcher);
+            s_instance = new VulkanSystemInfo();
 
         return *s_instance;
     }
@@ -51,8 +50,8 @@ struct VulkanSystemInfo
 
 // "local" singleton, no automatic release
 private:
-    VulkanSystemInfo(hephaestus::VulkanDispatcher& _dispatcher) :
-        deviceManager(_dispatcher),
+    VulkanSystemInfo() :
+        deviceManager(),
         renderer(deviceManager),
         meshPipeline(deviceManager)
     {}
@@ -103,8 +102,8 @@ HEPHAESTUS_BINDINGS_Init(uint32_t width, uint32_t height, const std::string& sha
 
     // create the dispatcher for the loaded Vulkan functions
     {
-        s_dispatcher.InitFromLibrary(s_vulkanLib);
-        s_dispatcher.LoadGlobalFunctions();
+        hephaestus::VulkanDispatcher::InitFromLibrary(s_vulkanLib);
+        hephaestus::VulkanDispatcher::LoadGlobalFunctions();
     }
 
     // create the instance with the system info
