@@ -41,8 +41,10 @@ VulkanUtils::CreateShaderModule(const VulkanDeviceManager& deviceManager, const 
     {
         vk::ShaderModuleCreateInfo createInfo(
             vk::ShaderModuleCreateFlags(), code.size(), (uint32_t*)code.data());
-        return deviceManager.GetDevice().createShaderModuleUnique(
-            createInfo, nullptr);
+        ShaderModuleHandle shader;
+        HEPHAESTUS_CHECK_RESULT_HANDLE(shader, 
+            deviceManager.GetDevice().createShaderModuleUnique(createInfo, nullptr));
+        return shader;
     }
     else
         HEPHAESTUS_LOG_WARNING("Failed to open shader file: %s", filename);
@@ -61,17 +63,17 @@ VulkanUtils::CreateDepthImage(const VulkanDeviceManager& deviceManager,
         vk::ImageType::e2D,
         format,
         { (uint32_t)width, (uint32_t)height, 1 },	// extend 3D
-        1,		// mip levels
-        1,		// array layers
+        1,      // mip levels
+        1,      // array layers
         vk::SampleCountFlagBits::e1,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::SharingMode::eExclusive,
-        0, nullptr,		// queue families
+        0, nullptr,     // queue families
         vk::ImageLayout::eUndefined
     );
-    depthImageInfo.imageHandle = 
-        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(depthImageInfo.imageHandle, 
+        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr));
 
     if (!VulkanUtils::AllocateImageMemory(
         deviceManager, vk::MemoryPropertyFlagBits::eDeviceLocal, depthImageInfo))
@@ -91,9 +93,9 @@ VulkanUtils::CreateDepthImage(const VulkanDeviceManager& deviceManager,
             vk::ComponentSwizzle::eIdentity,
             vk::ComponentSwizzle::eIdentity
         },
-        { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 });	// sub resource range
-    depthImageInfo.view = 
-        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr);
+        { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 });   // sub resource range
+    HEPHAESTUS_CHECK_RESULT_HANDLE(depthImageInfo.view,
+        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr));
 
     return true;
 }
@@ -109,10 +111,10 @@ VulkanUtils::CreateBuffer(const VulkanDeviceManager& deviceManager, uint32_t siz
         bufferInfo.size,
         usage,
         vk::SharingMode::eExclusive,
-        0, nullptr);								// queue family indices
+        0, nullptr);        // queue family indices
 
-    bufferInfo.bufferHandle = deviceManager.GetDevice().createBufferUnique(
-        bufferCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(bufferInfo.bufferHandle, 
+        deviceManager.GetDevice().createBufferUnique(bufferCreateInfo, nullptr));
     if (!VulkanUtils::AllocateBufferMemory(deviceManager, memoryProperty, bufferInfo))
         return false;
 
@@ -138,8 +140,8 @@ VulkanUtils::AllocateBufferMemory(const VulkanDeviceManager& deviceManager,
             (memoryProperties.memoryTypes[memoryTypeIndex].propertyFlags & requiredMemoryProperty))
         {
             vk::MemoryAllocateInfo allocateInfo(bufferMemoryRequirements.size, memoryTypeIndex);
-            bufferInfo.deviceMemory = deviceManager.GetDevice().allocateMemoryUnique(
-                allocateInfo, nullptr);
+            HEPHAESTUS_CHECK_RESULT_HANDLE(bufferInfo.deviceMemory, 
+                deviceManager.GetDevice().allocateMemoryUnique(allocateInfo, nullptr));
             return true;
         }
     }
@@ -163,8 +165,8 @@ VulkanUtils::AllocateImageMemory(const VulkanDeviceManager& deviceManager,
             (memoryProperties.memoryTypes[memoryTypeIndex].propertyFlags & requiredMemoryProperty))
         {
             vk::MemoryAllocateInfo allocateInfo(bufferMemoryRequirements.size, memoryTypeIndex);
-            imageInfo.deviceMemory = deviceManager.GetDevice().allocateMemoryUnique(
-                allocateInfo, nullptr);
+            HEPHAESTUS_CHECK_RESULT_HANDLE(imageInfo.deviceMemory, 
+                deviceManager.GetDevice().allocateMemoryUnique(allocateInfo, nullptr));
             return true;
         }
     }
@@ -190,8 +192,8 @@ VulkanUtils::CreateImageTextureInfo(const VulkanDeviceManager& deviceManager,
         0, nullptr,		// queue families
         vk::ImageLayout::eUndefined
     );
-    textureInfo.imageHandle = 
-        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(textureInfo.imageHandle,
+        deviceManager.GetDevice().createImageUnique(imageCreateInfo, nullptr));
 
     // allocate memory for image
     if (!VulkanUtils::AllocateImageMemory(deviceManager, vk::MemoryPropertyFlagBits::eDeviceLocal, textureInfo))
@@ -212,8 +214,8 @@ VulkanUtils::CreateImageTextureInfo(const VulkanDeviceManager& deviceManager,
             vk::ComponentSwizzle::eIdentity
         },
         { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });	// sub resource range
-    textureInfo.view = 
-        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(textureInfo.view,
+        deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr));
 
     vk::SamplerCreateInfo samplerCreateInfo(
         vk::SamplerCreateFlags(),
@@ -228,8 +230,8 @@ VulkanUtils::CreateImageTextureInfo(const VulkanDeviceManager& deviceManager,
         0.f, 0.f,									// min/max Lod
         vk::BorderColor::eFloatTransparentBlack,
         VK_FALSE);									// un normalized coords
-    textureInfo.sampler = deviceManager.GetDevice().createSamplerUnique(
-        samplerCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(textureInfo.sampler, 
+        deviceManager.GetDevice().createSamplerUnique(samplerCreateInfo, nullptr));
 
     return true;
 }
@@ -246,11 +248,13 @@ VulkanUtils::CopyBufferDataStage(const VulkanDeviceManager& deviceManager, const
 
     // copy vertex data to the stage buffer
     {
-        void* stageBufferPtr = deviceManager.GetDevice().mapMemory(
-            stageBufferInfo.deviceMemory.get(),
-            0,				// offset
-            updateInfo.dataSize,
-            vk::MemoryMapFlags());
+        void* stageBufferPtr = nullptr;
+        HEPHAESTUS_CHECK_RESULT_RAW(stageBufferPtr, deviceManager.GetDevice().mapMemory(
+                                                        stageBufferInfo.deviceMemory.get(),
+                                                        0,  // offset
+                                                        updateInfo.dataSize,
+                                                        vk::MemoryMapFlags()));
+
         if (stageBufferPtr == nullptr)
             return false;
         std::memcpy(stageBufferPtr, updateInfo.data, updateInfo.dataSize);
@@ -319,11 +323,12 @@ VulkanUtils::CopyImageDataStage(const VulkanDeviceManager& deviceManager, const 
 
     // copy image data to the stage buffer
     {
-        void* stageBufferPtr = deviceManager.GetDevice().mapMemory(
-            stageBufferInfo.deviceMemory.get(),
-            0,	// offset
-            textureUpdateInfo.dataSize,
-            vk::MemoryMapFlags());
+        void* stageBufferPtr = nullptr;
+        HEPHAESTUS_CHECK_RESULT_RAW(stageBufferPtr ,deviceManager.GetDevice().mapMemory(
+                                                        stageBufferInfo.deviceMemory.get(),
+                                                        0,	// offset
+                                                        textureUpdateInfo.dataSize,
+                                                        vk::MemoryMapFlags()));
         if (stageBufferPtr == nullptr)
             return false;
         std::memcpy(stageBufferPtr, textureUpdateInfo.data, textureUpdateInfo.dataSize);
@@ -416,11 +421,12 @@ VulkanUtils::CopyBufferDataHost(const VulkanDeviceManager& deviceManager,
     HEPHAESTUS_ASSERT(dstBufferInfo.IsValid());
     HEPHAESTUS_ASSERT(updateInfo.dataSize <= dstBufferInfo.size);
 
-    void* mappedMemPtr = deviceManager.GetDevice().mapMemory(
-        dstBufferInfo.deviceMemory.get(),
-        dstBufferOffset,				// offset
-        updateInfo.dataSize,
-        vk::MemoryMapFlags());
+    void* mappedMemPtr = nullptr; 
+    HEPHAESTUS_CHECK_RESULT_RAW(mappedMemPtr, deviceManager.GetDevice().mapMemory(
+                                                    dstBufferInfo.deviceMemory.get(),
+                                                    dstBufferOffset,    // offset
+                                                    updateInfo.dataSize,
+                                                    vk::MemoryMapFlags()));
     if (mappedMemPtr == nullptr)
         return false;
     std::memcpy(mappedMemPtr, updateInfo.data, updateInfo.dataSize);
@@ -451,8 +457,8 @@ VulkanUtils::CreateDescriptorPool(const VulkanDeviceManager& deviceManager,
         vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 12u, 
         (uint32_t)poolSizes.size(), poolSizes.data());
 
-    descriptorPool = deviceManager.GetDevice().createDescriptorPoolUnique(
-        poolCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(descriptorPool, 
+        deviceManager.GetDevice().createDescriptorPoolUnique(poolCreateInfo, nullptr));
 
     return true;
 }
@@ -522,8 +528,8 @@ VulkanUtils::CreateRenderPass(const VulkanDeviceManager& deviceManager,
         1, &subpassDescription,
         (uint32_t)dependencies.size(), dependencies.data());
 
-    renderPass = deviceManager.GetDevice().createRenderPassUnique(
-        renderPassCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(renderPass, 
+        deviceManager.GetDevice().createRenderPassUnique(renderPassCreateInfo, nullptr));
 
     return true;
 }

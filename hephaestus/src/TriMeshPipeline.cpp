@@ -86,8 +86,8 @@ TriMeshPipeline::SetupDescriptorSets()
         vk::DescriptorSetLayoutCreateInfo layoutCreateInfo(
             vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
         
-        m_descriptorSetLayout =
-            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr);
+        HEPHAESTUS_CHECK_RESULT_HANDLE(m_descriptorSetLayout,
+            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr));
     }
 
     for (SubMeshInfo& info : m_subMeshes)
@@ -104,7 +104,8 @@ TriMeshPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
     {
         vk::DescriptorSetAllocateInfo allocInfo(
             m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
-        std::vector<vk::DescriptorSet> descSet = m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo);
+        std::vector<vk::DescriptorSet> descSet;
+        HEPHAESTUS_CHECK_RESULT_RAW(descSet, m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo));
         vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
             m_deviceManager.GetDevice(), m_descriptorPool.get());
         descSetInfo.handle = VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
@@ -156,8 +157,8 @@ TriMeshPipeline::CreatePipelineLayout()
         vk::PipelineLayoutCreateFlags(),
         1, &m_descriptorSetLayout.get(),
         0, nullptr);
-    m_pipelineLayout =
-        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_pipelineLayout,
+        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr));
 }
 
 bool
@@ -314,8 +315,8 @@ TriMeshPipeline::CreatePipeline(vk::RenderPass renderPass,
         nullptr,						    // basePipelineHandle
         -1);								// basePipelineIndex
 
-    m_vulkanGraphicsPipeline = 
-        m_deviceManager.GetDevice().createGraphicsPipelineUnique(nullptr, pipelineCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_vulkanGraphicsPipeline, 
+        m_deviceManager.GetDevice().createGraphicsPipelineUnique(nullptr, pipelineCreateInfo, nullptr));
 
     return true;
 }

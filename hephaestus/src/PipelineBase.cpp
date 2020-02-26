@@ -60,16 +60,17 @@ PipelineBase::SetupDescriptorSets()
         vk::DescriptorSetLayoutCreateInfo layoutCreateInfo(
             vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
 
-        m_descriptorSetLayout =
-            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr);
+        HEPHAESTUS_CHECK_RESULT_HANDLE(m_descriptorSetLayout, 
+            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr));
     }
 
     // allocate descriptor set
     {
         vk::DescriptorSetAllocateInfo allocInfo(
             m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
-        std::vector<vk::DescriptorSet> descSet =
-            m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo);
+        std::vector<vk::DescriptorSet> descSet;
+        HEPHAESTUS_CHECK_RESULT_RAW(descSet, m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo));
+
         vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
             m_deviceManager.GetDevice(), m_descriptorPool.get());
         m_descriptorSetInfo.handle =

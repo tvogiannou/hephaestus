@@ -4,6 +4,7 @@
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanUtils.h>
 
 #include <vector>
 #include <cstring>
@@ -16,7 +17,8 @@ namespace hephaestus
 bool 
 VulkanValidate::CheckInstanceValidationLayerSupport(const std::vector<const char*>& validationLayers)
 {
-    std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
+    std::vector<vk::LayerProperties> availableLayers;
+    HEPHAESTUS_CHECK_RESULT_RAW(availableLayers, vk::enumerateInstanceLayerProperties());
 
     for (const char* layerName : validationLayers)
     {
@@ -40,8 +42,8 @@ VulkanValidate::CheckInstanceValidationLayerSupport(const std::vector<const char
 bool 
 VulkanValidate::CheckInstanceRequiredExtensions(const std::vector<const char*>& instanceExtensions)
 {
-    std::vector<vk::ExtensionProperties> instanceExtensionProperties = 
-                        vk::enumerateInstanceExtensionProperties(nullptr);
+    std::vector<vk::ExtensionProperties> instanceExtensionProperties;
+    HEPHAESTUS_CHECK_RESULT_RAW(instanceExtensionProperties, vk::enumerateInstanceExtensionProperties(nullptr));
 
     for (const char* extensionName : instanceExtensions)
     {
@@ -73,8 +75,9 @@ VulkanValidate::CheckPhysicalDeviceRequiredExtensions(
 {
     HEPHAESTUS_LOG_ASSERT(physicalDevice, "No Vulkan physical device available");
     
-    std::vector<vk::ExtensionProperties> instanceExtensionProperties =
-        physicalDevice.enumerateDeviceExtensionProperties(nullptr);
+    std::vector<vk::ExtensionProperties> instanceExtensionProperties;
+    HEPHAESTUS_CHECK_RESULT_RAW(instanceExtensionProperties, 
+        physicalDevice.enumerateDeviceExtensionProperties(nullptr));
 
     for (const char* extensionName : deviceExtensions)
     {
@@ -106,7 +109,7 @@ VulkanValidate::CheckPhysicalDevicePropertiesAndFeatures(
     HEPHAESTUS_LOG_ASSERT(physicalDevice, "No Vulkan physical device available");
 
     const vk::PhysicalDeviceProperties& properties = physicalDevice.getProperties();
-    //const vk::PhysicalDeviceFeatures& features = physicalDevice.getFeatures(dispatcher);
+    //const vk::PhysicalDeviceFeatures& features = physicalDevice.getFeatures();
 
     const uint32_t major_version = VK_VERSION_MAJOR( properties.apiVersion );
     if( (major_version < 1) || (properties.limits.maxImageDimension2D < 4096) )

@@ -272,7 +272,9 @@ int main(/*int argc, char** argv*/)
     std::atexit(UnloadVulkanLib);
 
     // setup Vulkan & run app
+#ifndef VULKAN_HPP_NO_EXCEPTIONS
     try
+#endif
     {
         // create window
         hephaestus::SimpleWindow window;
@@ -400,6 +402,7 @@ int main(/*int argc, char** argv*/)
 
         deviceManager.WaitDevice();
     }
+#ifndef VULKAN_HPP_NO_EXCEPTIONS
     catch (vk::SystemError err)
     {
         HEPHAESTUS_LOG_ERROR("vk::SystemError: %s", err.what());
@@ -410,6 +413,7 @@ int main(/*int argc, char** argv*/)
         HEPHAESTUS_LOG_ERROR("unknown error");
         std::exit(EXIT_FAILURE);
     }
+#endif
 
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

@@ -100,8 +100,8 @@ SwapChainRenderer::RenderBegin(RenderInfo& renderInfo, RenderStats& stats)
         m_swapChainInfo.extent.height,
         1);		// layers
 
-    currentResource.framebuffer =
-        m_deviceManager.GetDevice().createFramebufferUnique(frameBufferCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(currentResource.framebuffer,
+        m_deviceManager.GetDevice().createFramebufferUnique(frameBufferCreateInfo, nullptr));
 
     // set the render info
     {
@@ -280,20 +280,22 @@ SwapChainRenderer::CreateRenderingResources(uint32_t numVirtualFrames)
     {
         vk::CommandBufferAllocateInfo cmdBufferAllocateInfo(
             m_graphicsCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
-        std::vector<vk::CommandBuffer> buffer = m_deviceManager.GetDevice().allocateCommandBuffers(
-            cmdBufferAllocateInfo);
+        std::vector<vk::CommandBuffer> buffer;
+        HEPHAESTUS_CHECK_RESULT_RAW(buffer, 
+            m_deviceManager.GetDevice().allocateCommandBuffers(cmdBufferAllocateInfo));
         vk::PoolFree<vk::Device, vk::CommandPool, VulkanDispatcher> deleter(
             m_deviceManager.GetDevice(), m_graphicsCommandPool.get());
         resources.commandBuffer = VulkanUtils::CommandBufferHandle(buffer.front(), deleter);
 
         vk::SemaphoreCreateInfo semaphoreCreateInfo;
-        resources.finishedRenderingSemaphore = 
-            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr);
-        resources.imageAvailableSemaphore = 
-            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr);
+        HEPHAESTUS_CHECK_RESULT_HANDLE(resources.finishedRenderingSemaphore, 
+            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr));
+        HEPHAESTUS_CHECK_RESULT_HANDLE(resources.imageAvailableSemaphore,
+            m_deviceManager.GetDevice().createSemaphoreUnique(semaphoreCreateInfo, nullptr));
 
         vk::FenceCreateInfo fenceCreateInfo(vk::FenceCreateFlagBits::eSignaled);
-        resources.fence = m_deviceManager.GetDevice().createFenceUnique(fenceCreateInfo, nullptr);
+        HEPHAESTUS_CHECK_RESULT_HANDLE(resources.fence, 
+            m_deviceManager.GetDevice().createFenceUnique(fenceCreateInfo, nullptr));
     }
 
     return true;
@@ -312,9 +314,9 @@ SwapChainRenderer::CreateSwapChain()
     // set format
     vk::SurfaceFormatKHR desiredFormat = { vk::Format::eUndefined, vk::ColorSpaceKHR::eSrgbNonlinear };
     {
-        const std::vector<vk::SurfaceFormatKHR>& surfaceFormats =
-            m_deviceManager.GetPhysicalDevice().getSurfaceFormatsKHR(
-                m_deviceManager.GetPresentSurface());
+        std::vector<vk::SurfaceFormatKHR> surfaceFormats;
+        HEPHAESTUS_CHECK_RESULT_RAW(surfaceFormats, m_deviceManager.GetPhysicalDevice().getSurfaceFormatsKHR(
+                                                        m_deviceManager.GetPresentSurface()));
         HEPHAESTUS_LOG_ASSERT(!surfaceFormats.empty(), "Failed to find valid KHR surface format");
         desiredFormat = surfaceFormats[0];
         {
@@ -342,8 +344,9 @@ SwapChainRenderer::CreateSwapChain()
     vk::ImageUsageFlags desiredUsage = (vk::ImageUsageFlagBits)(-1);
     vk::SurfaceTransformFlagBitsKHR desiredTransform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
     {
-        vk::SurfaceCapabilitiesKHR surfaceCapabilities =
-            m_deviceManager.GetPhysicalDevice().getSurfaceCapabilitiesKHR(m_deviceManager.GetPresentSurface());
+        vk::SurfaceCapabilitiesKHR surfaceCapabilities;
+        HEPHAESTUS_CHECK_RESULT_RAW(surfaceCapabilities, 
+            m_deviceManager.GetPhysicalDevice().getSurfaceCapabilitiesKHR(m_deviceManager.GetPresentSurface()));
         desiredImageCount =
             (surfaceCapabilities.maxImageCount > 0 && surfaceCapabilities.minImageCount + 1 > surfaceCapabilities.maxImageCount) ?
             surfaceCapabilities.maxImageCount : surfaceCapabilities.minImageCount + 1;
@@ -379,8 +382,9 @@ SwapChainRenderer::CreateSwapChain()
     // set presentation mode
     vk::PresentModeKHR desiredPresentMode = (vk::PresentModeKHR) - 1;
     {
-        const std::vector<vk::PresentModeKHR>& presentModes =
-            m_deviceManager.GetPhysicalDevice().getSurfacePresentModesKHR(m_deviceManager.GetPresentSurface());
+        std::vector<vk::PresentModeKHR> presentModes;
+        HEPHAESTUS_CHECK_RESULT_RAW(presentModes, 
+            m_deviceManager.GetPhysicalDevice().getSurfacePresentModesKHR(m_deviceManager.GetPresentSurface()));
 
         // FIFO present mode is always available
         // MAILBOX is the lowest latency V-Sync enabled mode (something like triple-buffering) so use it if available
@@ -436,15 +440,16 @@ SwapChainRenderer::CreateSwapChain()
         true, // clipped
         m_swapChainInfo.swapChainHandle.get());
 
-    m_swapChainInfo.swapChainHandle = 
-        m_deviceManager.GetDevice().createSwapchainKHRUnique(swapChainCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_swapChainInfo.swapChainHandle, 
+        m_deviceManager.GetDevice().createSwapchainKHRUnique(swapChainCreateInfo, nullptr));
 
     // set swap chain images
     {
         m_swapChainInfo.format = desiredFormat.format;
         m_swapChainInfo.extent = desiredExtent;
-        const std::vector<vk::Image>& images = m_deviceManager.GetDevice().getSwapchainImagesKHR(
-            m_swapChainInfo.swapChainHandle.get());
+        std::vector<vk::Image> images;
+        HEPHAESTUS_CHECK_RESULT_RAW(images, m_deviceManager.GetDevice().getSwapchainImagesKHR(
+                                                m_swapChainInfo.swapChainHandle.get()));
 
         for (vk::Image image : images)
             m_swapChainInfo.imageRefs.emplace_back(image);
@@ -462,8 +467,8 @@ SwapChainRenderer::CreateSwapChain()
                 vk::ComponentSwizzle::eIdentity },
                 { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
 
-            imageInfo.view = 
-                m_deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr);
+            HEPHAESTUS_CHECK_RESULT_HANDLE(imageInfo.view, 
+                m_deviceManager.GetDevice().createImageViewUnique(viewCreateInfo, nullptr));
         }
     }
 

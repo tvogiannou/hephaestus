@@ -60,6 +60,5 @@
         #define HEPHAESTUS_ASSERT(expr) assert(expr)
     #endif
 #else
-    #include <cassert>
-    #define HEPHAESTUS_ASSERT(expr) assert(expr)
+    #define HEPHAESTUS_ASSERT(expr) HEPHAESTUS_UNUSED(expr)
 #endif

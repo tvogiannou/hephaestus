@@ -2,7 +2,7 @@
 
 #include <hephaestus/Platform.h>
 
-// Utility header to forward to appropiate platform
+// Utility header to forward to appropriate platform headers and config Vulkan preprocessor defines
 // Should be included by files using Vulkan instead of including Vulkan headers directly
 
 // platform specific configuration
@@ -28,7 +28,7 @@
 
 
 // Vulkan configuration
-// forward our dispatcher as the default one
+// set the hephaestus dispatcher as the default one
 namespace hephaestus
 {
     struct VulkanDispatcher;
@@ -36,5 +36,9 @@ namespace hephaestus
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::hephaestus::VulkanDispatcher
 #define VULKAN_HPP_DEFAULT_DISPATCHER hephaestus::VulkanDispatcher::GetInstance()
+// disable exceptions
+#define VULKAN_HPP_NO_EXCEPTIONS
+// forward to hephaestus assert so that we can mark unused variables
+#define VULKAN_HPP_ASSERT HEPHAESTUS_ASSERT
 
 #include <vulkan/vulkan.hpp>

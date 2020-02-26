@@ -83,10 +83,9 @@ VulkanDeviceManager::CreateInstance(bool enableValidationLayers)
         creationInfo.setEnabledLayerCount((uint32_t)validationLayers.size());
         creationInfo.setPpEnabledLayerNames(validationLayers.data());
     }
-    m_instance = vk::createInstanceUnique(creationInfo, nullptr);
 
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_instance, vk::createInstanceUnique(creationInfo, nullptr));
     VulkanDispatcher::GetInstance().LoadInstanceFunctions(m_instance.get());
-
 
     if (enableValidationLayers)
     {
@@ -103,7 +102,8 @@ VulkanDeviceManager::CreateInstance(bool enableValidationLayers)
         messengerCreateInfo.pfnUserCallback = s_DebugCallback;
         messengerCreateInfo.pUserData = nullptr;
 
-        m_debugMessenger = m_instance->createDebugUtilsMessengerEXTUnique(messengerCreateInfo, nullptr);
+        HEPHAESTUS_CHECK_RESULT_HANDLE(m_debugMessenger,
+            m_instance->createDebugUtilsMessengerEXTUnique(messengerCreateInfo, nullptr));
     }
 
     return true;
@@ -114,7 +114,9 @@ VulkanDeviceManager::CreateDevice(bool createPresentQueue /*= true*/)
 {
     HEPHAESTUS_LOG_ASSERT(m_instance, "Vulkan instance has not been initialized");
 
-    const std::vector<vk::PhysicalDevice>& physicalDevices = m_instance->enumeratePhysicalDevices();
+    std::vector<vk::PhysicalDevice> physicalDevices;
+    HEPHAESTUS_CHECK_RESULT_RAW(physicalDevices, m_instance->enumeratePhysicalDevices());
+    
     if (physicalDevices.empty())
         return false;
 
@@ -146,7 +148,7 @@ VulkanDeviceManager::CreateDevice(bool createPresentQueue /*= true*/)
         deviceQueueCreateInfos.data());
     deviceCreateInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
     deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-    m_device = m_physicalDevice.createDeviceUnique(deviceCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_device, m_physicalDevice.createDeviceUnique(deviceCreateInfo, nullptr));
 
     VulkanDispatcher::GetInstance().LoadDeviceFunctions(m_device.get());
 
@@ -181,7 +183,10 @@ VulkanDeviceManager::SetupQueueFamilies(bool findPresentQueue /*= true*/)
 
         if (findPresentQueue)
         {
-            if (m_physicalDevice.getSurfaceSupportKHR(queueFamilyIndex, m_presentSurface.get()))
+            uint32_t hasKHRSupport = false;
+            HEPHAESTUS_CHECK_RESULT_RAW(hasKHRSupport,
+                m_physicalDevice.getSurfaceSupportKHR(queueFamilyIndex, m_presentSurface.get()));
+            if (hasKHRSupport)
                 m_presentQueueInfo.familyIndex = queueFamilyIndex;
 
             if (m_graphicsQueueInfo.familyIndex < queueFamilyProperties.size() &&
@@ -266,7 +271,7 @@ VulkanDeviceManager::CreatePresentSurface(HINSTANCE instance, HWND handle)
 
     vk::Win32SurfaceCreateInfoKHR surfaceInfo(
         vk::Win32SurfaceCreateFlagsKHR(), instance, handle);
-    m_presentSurface = m_instance->createWin32SurfaceKHRUnique(surfaceInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_presentSurface, m_instance->createWin32SurfaceKHRUnique(surfaceInfo, nullptr));
 
     return true;
 }

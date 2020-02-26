@@ -5,6 +5,36 @@
 
 #include <vector>
 
+// helper macros to handle Vulkan hpp API differences between exception enabled
+// and exception disabled function declarations
+#ifdef VULKAN_HPP_NO_EXCEPTIONS
+
+#define TOKENPASTE(x, y) x ## y
+#define TOKENPASTE2(x, y) TOKENPASTE(x, y)
+
+#include <tuple>
+
+// check the result and copy the value to the variable
+#define HEPHAESTUS_CHECK_RESULT_RAW(var, expr) {\
+vk::Result TOKENPASTE2(result_, __LINE__); \
+std::tie(TOKENPASTE2(result_, __LINE__), var) = expr; \
+HEPHAESTUS_ASSERT(TOKENPASTE2(result_, __LINE__) == vk::Result::eSuccess); }
+
+// check the result and copy the value to the handle
+#define HEPHAESTUS_CHECK_RESULT_HANDLE(handle, expr) {\
+auto TOKENPASTE2(result_, __LINE__) = expr; \
+HEPHAESTUS_ASSERT(TOKENPASTE2(result_, __LINE__).result == vk::Result::eSuccess); \
+handle.swap(TOKENPASTE2(result_, __LINE__).value); \
+TOKENPASTE2(result_, __LINE__).value.reset(nullptr); }
+
+#else
+// with exceptions enabled simply set the value returned from the function
+
+#define HEPHAESTUS_CHECK_RESULT_RAW(var, expr) var = expr
+#define HEPHAESTUS_CHECK_RESULT_HANDLE(handle, expr) handle = expr
+#endif // VULKAN_HPP_NO_EXCEPTIONS
+
+
 
 namespace hephaestus
 {

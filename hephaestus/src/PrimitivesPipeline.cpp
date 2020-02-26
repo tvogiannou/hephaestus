@@ -189,8 +189,8 @@ PrimitivesPipeline::CreatePipeline(
         vk::PipelineLayoutCreateFlags(),
         1, &m_descriptorSetLayout.get(),
         0, nullptr);
-    m_graphicsPipelineLayout = 
-        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_graphicsPipelineLayout,
+        m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr));
 
     // gather all pipeline params
     vk::GraphicsPipelineCreateInfo pipelineCreateInfo(
@@ -212,8 +212,8 @@ PrimitivesPipeline::CreatePipeline(
         nullptr,						    // basePipelineHandle
         -1);								// basePipelineIndex
 
-    m_vulkanGraphicsPipeline = m_deviceManager.GetDevice().createGraphicsPipelineUnique(
-        nullptr, pipelineCreateInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_vulkanGraphicsPipeline, 
+        m_deviceManager.GetDevice().createGraphicsPipelineUnique(nullptr, pipelineCreateInfo, nullptr));
 
     return true;
 }
