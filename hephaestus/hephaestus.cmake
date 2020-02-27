@@ -28,7 +28,7 @@ set(HEPHAESTUS_SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanValidate.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanUtils.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/SwapChainRenderer.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanPlatformConfig.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/VulkanConfig.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/Platform.h
     ${CMAKE_CURRENT_LIST_DIR}/include/hephaestus/Log.h)
 set(HEPHAESTUS_PUBLIC_HEADERS_DIR ${CMAKE_CURRENT_LIST_DIR}/include)

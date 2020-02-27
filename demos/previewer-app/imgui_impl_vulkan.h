@@ -16,7 +16,7 @@
 #include <imgui.h>
 
 // Function dispatcher for dynamic Vulkan loading
-#include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanConfig.h>
 #include <vulkan/vulkan.h>
 
 #include <hephaestus/VulkanDispatcher.h>

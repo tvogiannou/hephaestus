@@ -6,7 +6,7 @@
 #include <common/CommonUtils.h>
 #include <common/MeshUtils.h>
 #include <hephaestus/TriMeshPipeline.h>
-#include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanConfig.h>
 #include <hephaestus/HeadlessRenderer.h>
 
 #include <tuple>

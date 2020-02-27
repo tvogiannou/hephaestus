@@ -3,7 +3,7 @@
 #include <hephaestus/Log.h>
 #include <hephaestus/Platform.h>
 #include <hephaestus/VulkanDispatcher.h>
-#include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanConfig.h>
 #include <hephaestus/VulkanUtils.h>
 
 #include <vector>

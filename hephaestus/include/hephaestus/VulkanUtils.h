@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hephaestus/Platform.h>
-#include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanConfig.h>
 
 #include <vector>
 

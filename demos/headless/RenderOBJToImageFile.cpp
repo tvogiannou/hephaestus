@@ -8,7 +8,7 @@
 #include <hephaestus/Platform.h>
 #include <hephaestus/TriMeshPipeline.h>
 #include <hephaestus/HeadlessRenderer.h>
-#include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanConfig.h>
 
 #include <cstdlib>
 #include <cassert>

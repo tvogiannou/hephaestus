@@ -6,7 +6,7 @@
 #include <common/CommonUtils.h>
 #include <common/Matrix4.h>
 #include <hephaestus/PipelineBase.h>
-#include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanConfig.h>
 
 
 static void check_vk_result(VkResult err)

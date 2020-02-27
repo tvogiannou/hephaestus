@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hephaestus/Platform.h>
-#include <hephaestus/VulkanPlatformConfig.h>
+#include <hephaestus/VulkanConfig.h>
 
 
 #define HEPHAESTUS_VULKAN_EXPORTEDFUNCTION_DECLARATION(fun) PFN_##fun fun = 0
