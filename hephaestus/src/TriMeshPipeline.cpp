@@ -20,9 +20,9 @@ TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInf
         frameInfo.drawCmdBuffer.bindVertexBuffers(0, m_vertexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u);
         frameInfo.drawCmdBuffer.bindIndexBuffer(m_indexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u, vk::IndexType::eUint32);
 
-        for (size_t i = 0; i < m_subMeshes.size(); ++i)
+        for (size_t i = 0; i < m_MeshInfos.size(); ++i)
         {
-            const SubMeshInfo& info = m_subMeshes[i];
+            const MeshInfo& info = m_MeshInfos[i];
             if (info.visible)
             {
                 HEPHAESTUS_LOG_ASSERT(info.indexOffset >= 0, "Cannot bind sub mesh without valid index offset");
@@ -32,12 +32,12 @@ TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInf
                     m_pipelineLayout.get(), 0, info.descriptorSetInfo.handle.get(), nullptr);
 
                 // compute offsets & index size from bytes to vertex indices as expected by drawIndexed()
-                const uint32_t subMeshIndexSize =
-                    (i + 1 == m_subMeshes.size() ? 
+                const uint32_t meshIndexSize =
+                    (i + 1 == m_MeshInfos.size() ? 
                     (uint32_t)m_indexBufferCurSize : 
-                    (uint32_t)m_subMeshes[i + 1].indexOffset) - (uint32_t)info.indexOffset;
+                    (uint32_t)m_MeshInfos[i + 1].indexOffset) - (uint32_t)info.indexOffset;
 
-                const uint32_t indicesCount = subMeshIndexSize / VertexData::IndexSize;
+                const uint32_t indicesCount = meshIndexSize / VertexData::IndexSize;
                 const uint32_t indexOffset = (uint32_t)info.indexOffset / VertexData::IndexSize;
                 const uint32_t vertexOffset = (int32_t)info.vertexOffset / sizeof(VertexData);
 
@@ -90,7 +90,7 @@ TriMeshPipeline::SetupDescriptorSets()
             m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr));
     }
 
-    for (SubMeshInfo& info : m_subMeshes)
+    for (MeshInfo& info : m_MeshInfos)
         SetupDescriptorSet(info.descriptorSetInfo, m_uniformBufferInfo, info.textureInfo);
 
     return true;
@@ -322,22 +322,22 @@ TriMeshPipeline::CreatePipeline(vk::RenderPass renderPass,
 }
 
 bool 
-TriMeshPipeline::SubMeshSetTextureData(SubMeshIDType subMeshId, 
+TriMeshPipeline::MeshSetTextureData(MeshIDType meshId, 
     const VulkanUtils::TextureUpdateInfo& textureUpdateInfo)
 {
-    HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
 
-    SubMeshInfo& subMeshInfo = m_subMeshes[subMeshId];
-    return VulkanUtils::CopyImageDataStage(m_deviceManager, m_stageBufferInfo, subMeshInfo.textureInfo, textureUpdateInfo);
+    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    return VulkanUtils::CopyImageDataStage(m_deviceManager, m_stageBufferInfo, meshIdInfo.textureInfo, textureUpdateInfo);
 }
 
 void 
-TriMeshPipeline::SubMeshSetVisible(uint32_t subMeshId, bool visible)
+TriMeshPipeline::MeshSetVisible(uint32_t meshId, bool visible)
 {
-    HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
 
-    SubMeshInfo& subMeshInfo = m_subMeshes[subMeshId];
-    subMeshInfo.visible = visible;
+    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    meshIdInfo.visible = visible;
 }
 
 void 
@@ -350,9 +350,9 @@ TriMeshPipeline::Clear()
     m_indexBufferCurSize = 0u;
     m_uniformBufferInfo.Clear();
 
-    for (SubMeshInfo& info : m_subMeshes)
+    for (MeshInfo& info : m_MeshInfos)
         info.Clear();
-    m_subMeshes.clear();
+    m_MeshInfos.clear();
 
     // make sure the descriptor pool is destroyed *after* we have destroyed the descriptor sets
     m_descriptorSetLayout.reset(nullptr);
@@ -370,34 +370,34 @@ TriMeshPipeline::CreateIndexBuffer(uint32_t size)
         vk::MemoryPropertyFlagBits::eDeviceLocal, m_indexBufferInfo);
 }
 
-TriMeshPipeline::SubMeshIDType 
-TriMeshPipeline::SubMeshCreate()
+TriMeshPipeline::MeshIDType 
+TriMeshPipeline::CreateMeshID()
 {
-    m_subMeshes.push_back({});
-    m_subMeshes.back().vertexOffset = m_vertexBufferCurSize;    // create always pointing at currently 
+    m_MeshInfos.push_back({});
+    m_MeshInfos.back().vertexOffset = m_vertexBufferCurSize;    // create always pointing at currently 
                                                                 // available vertex buffer
-    return (SubMeshIDType)(m_subMeshes.size() - 1);
+    return (MeshIDType)(m_MeshInfos.size() - 1);
 }
 
 bool 
-TriMeshPipeline::SubMeshCreateTexture(SubMeshIDType subMeshId, uint32_t width, uint32_t height)
+TriMeshPipeline::MeshCreateTexture(MeshIDType meshId, uint32_t width, uint32_t height)
 {
-    HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
 
-    SubMeshInfo& subMeshInfo = m_subMeshes[subMeshId];
-    return VulkanUtils::CreateImageTextureInfo(m_deviceManager, width, height, subMeshInfo.textureInfo);
+    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    return VulkanUtils::CreateImageTextureInfo(m_deviceManager, width, height, meshIdInfo.textureInfo);
 }
 
 bool
-TriMeshPipeline::SubMeshSetIndexData(SubMeshIDType subMeshId, 
+TriMeshPipeline::MeshSetIndexData(MeshIDType meshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
-    HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
 
-    SubMeshInfo& subMeshInfo = m_subMeshes[subMeshId];
-    HEPHAESTUS_LOG_ASSERT(subMeshInfo.indexOffset < 0, "Updating sub mesh index data but it has already been set");
+    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    HEPHAESTUS_LOG_ASSERT(meshIdInfo.indexOffset < 0, "Updating sub mesh index data but it has already been set");
 
-    subMeshInfo.indexOffset = m_indexBufferCurSize;
+    meshIdInfo.indexOffset = m_indexBufferCurSize;
     if (!VulkanUtils::CopyBufferDataStage(m_deviceManager, m_stageBufferInfo, updateInfo, m_indexBufferInfo, 
         vk::AccessFlagBits::eIndexRead, vk::PipelineStageFlagBits::eVertexInput, m_indexBufferCurSize))
         return false;
@@ -408,14 +408,14 @@ TriMeshPipeline::SubMeshSetIndexData(SubMeshIDType subMeshId,
 }
 
 bool 
-TriMeshPipeline::SubMeshSetVertexData(SubMeshIDType subMeshId, 
+TriMeshPipeline::MeshSetVertexData(MeshIDType meshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)            
 {
-    HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
 
-    SubMeshInfo& subMeshInfo = m_subMeshes[subMeshId];
+    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
 
-    subMeshInfo.vertexOffset = m_vertexBufferCurSize;
+    meshIdInfo.vertexOffset = m_vertexBufferCurSize;
     if (!VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, 
         m_vertexBufferInfo, m_vertexBufferCurSize))
         return false;
@@ -426,14 +426,14 @@ TriMeshPipeline::SubMeshSetVertexData(SubMeshIDType subMeshId,
 }
 
 bool 
-TriMeshPipeline::SubMeshUpdateVertexData(SubMeshIDType subMeshId, 
+TriMeshPipeline::MeshUpdateVertexData(MeshIDType meshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
-    HEPHAESTUS_LOG_ASSERT(subMeshId < m_subMeshes.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
 
-    SubMeshInfo& subMeshInfo = m_subMeshes[subMeshId];
+    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
     return VulkanUtils::CopyBufferDataHost(
-        m_deviceManager, updateInfo, m_vertexBufferInfo, subMeshInfo.vertexOffset);
+        m_deviceManager, updateInfo, m_vertexBufferInfo, meshIdInfo.vertexOffset);
 }
 
-}
+} // hephaestus

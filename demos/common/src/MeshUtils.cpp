@@ -112,11 +112,11 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
             return false;
     }
 
-    TriMeshPipeline::SubMeshIDType subMeshId = outPipeline.SubMeshCreate();
+    TriMeshPipeline::MeshIDType newMeshId = outPipeline.CreateMeshID();
 
     // update texture
     {
-        outPipeline.SubMeshCreateTexture(subMeshId, imageDesc.width, imageDesc.height);
+        outPipeline.MeshCreateTexture(newMeshId, imageDesc.width, imageDesc.height);
 
         VulkanUtils::TextureUpdateInfo updateInfo;
         {
@@ -126,7 +126,7 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
             updateInfo.width = imageDesc.width;
             updateInfo.height = imageDesc.height;
         }
-        outPipeline.SubMeshSetTextureData(subMeshId, updateInfo);
+        outPipeline.MeshSetTextureData(newMeshId, updateInfo);
     }
 
     // upload vertex data
@@ -148,7 +148,7 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
                 updateInfo.dataSize = vertexDataSize;
             }
         }
-        if (!outPipeline.SubMeshSetVertexData(subMeshId, updateInfo))
+        if (!outPipeline.MeshSetVertexData(newMeshId, updateInfo))
             return false;
     }
 
@@ -171,7 +171,7 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
                 updateInfo.dataSize = indexDataSize;
             }
         }
-        if (!outPipeline.SubMeshSetIndexData(subMeshId, updateInfo))
+        if (!outPipeline.MeshSetIndexData(newMeshId, updateInfo))
             return false;
     }
 
