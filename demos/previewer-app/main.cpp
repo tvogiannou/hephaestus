@@ -256,7 +256,7 @@ int main(/*int argc, char** argv*/)
 {
     constexpr bool enableValidationLayers = true;
     //const char* shaderDir = "../data/shaders/";
-    const char* filename = "../data/teapot.obj";
+    const char* objFilename = "../data/teapot.obj";
 
     glfwSetErrorCallback(glfw_error_callback);
     CHECK_EXIT_MSG(glfwInit(), "Failed to initialize GLFW");
@@ -336,7 +336,7 @@ int main(/*int argc, char** argv*/)
         hephaestus::MeshUtils::TriMesh mesh;
         {
             hephaestus::CommonUtils::OBJFileInfo objInfo;
-            CHECK_EXIT_MSG(hephaestus::CommonUtils::LoadObjFile(filename, mesh, objInfo), "Failed to load file");
+            CHECK_EXIT_MSG(hephaestus::CommonUtils::LoadObjFile(objFilename, mesh, objInfo), "Failed to load file");
             if (!objInfo.hasNormals)
                 hephaestus::MeshUtils::ComputeSmoothNormals(mesh);
 

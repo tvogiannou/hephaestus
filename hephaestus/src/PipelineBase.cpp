@@ -118,12 +118,6 @@ PipelineBase::CreateUniformBuffer(uint32_t bufferSize)
         m_uniformBufferInfo);
 }
 
-bool 
-PipelineBase::UpdateUniformBufferData(const VulkanUtils::BufferUpdateInfo& updateInfo)
-{
-    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, m_uniformBufferInfo);
-}
-
 void 
 PipelineBase::Clear()
 {
@@ -147,7 +141,7 @@ PipelineBase::UpdateProjectionMatrix(const std::array<float, 16>& projectionMatr
 {
     m_uboData.projection = projectionMatrix;
 
-    return UpdateUBO(copyCmdBuffer);
+    return UpdateUBO(m_uniformBufferInfo, copyCmdBuffer);
 }
 
 bool 
@@ -155,7 +149,7 @@ PipelineBase::UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::Comm
 {
     m_uboData.model = viewMatrix;
 
-    return UpdateUBO(copyCmdBuffer);
+    return UpdateUBO(m_uniformBufferInfo, copyCmdBuffer);
 }
 
 bool
@@ -165,7 +159,7 @@ PipelineBase::UpdateViewAndProjectionMatrix(
     m_uboData.model = viewMatrix;
     m_uboData.projection = projectionMatrix;
 
-    return UpdateUBO(copyCmdBuffer);
+    return UpdateUBO(m_uniformBufferInfo, copyCmdBuffer);
 }
 
 bool
@@ -173,11 +167,11 @@ PipelineBase::UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBu
 {
     m_uboData.lightPos = lightPos;
 
-    return UpdateUBO(copyCmdBuffer);
+    return UpdateUBO(m_uniformBufferInfo, copyCmdBuffer);
 }
 
 bool 
-PipelineBase::UpdateUBO(vk::CommandBuffer copyCmdBuffer)
+PipelineBase::UpdateUBO(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer)
 {
     const uint32_t buffSize = 
         VulkanUtils::FixupFlushRange(m_deviceManager, PipelineBase::UBOData::UniformSize);
@@ -197,7 +191,7 @@ PipelineBase::UpdateUBO(vk::CommandBuffer copyCmdBuffer)
         updateInfo.dataSize = buffSize;
     }
 
-    return UpdateUniformBufferData(updateInfo);
+    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, uniformBufferInfo);
 }
 
 }

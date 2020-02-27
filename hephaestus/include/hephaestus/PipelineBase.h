@@ -54,7 +54,6 @@ public:
     void CreateStageBuffer(uint32_t stageSize = 1000000u);
     bool CreateVertexBuffer(uint32_t size);
     bool CreateUniformBuffer(uint32_t bufferSize);
-    bool UpdateUniformBufferData(const VulkanUtils::BufferUpdateInfo& updateInfo);
     bool AppendVertexData(const VulkanUtils::BufferUpdateInfo& updateInfo);
 
     // update UBO data
@@ -63,7 +62,7 @@ public:
     bool UpdateViewAndProjectionMatrix(
         const std::array<float, 16>& viewMatrix, const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
     bool UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateUBO(vk::CommandBuffer copyCmdBuffer);
+    bool UpdateUBO(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer);
 
     // internal
     vk::DescriptorPool GetDescriptorPool() const { return m_descriptorPool.get(); }

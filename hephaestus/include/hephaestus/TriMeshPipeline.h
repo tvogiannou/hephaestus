@@ -64,7 +64,7 @@ private:
 
     // pipeline setup
     bool SetupDescriptorSets() override;
-    void SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo, 
+    void SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
         const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo);
 
     bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
@@ -96,4 +96,4 @@ private:
     std::vector<MeshInfo> m_MeshInfos;
 };
 
-}
+} // hephaestus
