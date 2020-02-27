@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.5.1)
 project(demos)
 
+option (HEPHAESTUS_PREVIEWER_APP "Generate target for previewr app" ON)
+option (HEPHAESTUS_HEADLESS_EXAMPLE "Generate target for headless example" ON)
 option (HEPHAESTUS_PYTHON_BINDINGS "Generate target for python bindings" OFF)
 
 set(HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../external")
@@ -25,31 +27,29 @@ if(UNIX)
     endif()
 endif(UNIX)
 
+# add the hephaestus library
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../hephaestus
                  ${CMAKE_CURRENT_BINARY_DIR}/hephaestus-build
                  EXCLUDE_FROM_ALL)
 
-# utils shared by all demos
+# add common utils shared by all demos
 include(${CMAKE_CURRENT_LIST_DIR}/common/common.cmake)
 
-# headless renderer demo
-add_executable(headless-example ${CMAKE_CURRENT_LIST_DIR}/headless/RenderOBJToImageFile.cpp)
-target_include_directories(headless-example PRIVATE "${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/stb")
-target_link_libraries(headless-example PRIVATE hephaestus common ${CMAKE_DL_LIBS})
+# add headless renderer demo
+if (HEPHAESTUS_HEADLESS_EXAMPLE)
+include(${CMAKE_CURRENT_LIST_DIR}/headless/headless.cmake)
+endif()
 
 # non Android targets
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android")
     # real time app demo
+    if(HEPHAESTUS_PREVIEWER_APP)
     include(${CMAKE_CURRENT_LIST_DIR}/previewer-app/previewer-app.cmake)
-
+    endif()
+    
     # python bindings
     if(HEPHAESTUS_PYTHON_BINDINGS)
-    add_subdirectory(${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/pybind11  ${CMAKE_CURRENT_BINARY_DIR}/pybind11-build)
-    pybind11_add_module(hephaestus_bindings 
-                        python/module.cpp
-                        python/HephaestusBindingsUtils.cpp
-                        python/module.h)
-    target_link_libraries(hephaestus_bindings
-            PRIVATE hephaestus common)
+    set(HEPHAESTUS_PYBIND11_HEADERS_DIR "${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/pybind11")
+    include(${CMAKE_CURRENT_LIST_DIR}/python/hephaestus-bindings.cmake)
     endif(HEPHAESTUS_PYTHON_BINDINGS)
 endif()

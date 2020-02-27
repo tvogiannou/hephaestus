@@ -1,8 +1,15 @@
 cmake_minimum_required (VERSION 3.5.1)
 
+function(checkTargetExists targetName)
+    if (NOT TARGET ${targetName})
+        message(SEND_ERROR "Cannot generate ${CMAKE_PROJECT_NAME} if target ${targetName} is not defined.")
+    endif()
+endfunction(checkTargetExists)
+
 if(NOT DEFINED HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION)
     message(FATAL_ERROR "HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION needs be be defined")
 endif()
+
 
 # add sources
 set(COMMON_SOURCE_FILES 
@@ -31,4 +38,5 @@ target_include_directories(common PUBLIC ${COMMON_PUBLIC_HEADERS_DIR})
 target_include_directories(common PRIVATE "${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/stb")
 target_include_directories(common PRIVATE "${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/tiny_obj_loader")
 
+checkTargetExists(hephaestus)
 target_link_libraries(common PUBLIC hephaestus)

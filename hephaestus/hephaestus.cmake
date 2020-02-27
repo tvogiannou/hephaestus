@@ -1,6 +1,5 @@
 cmake_minimum_required (VERSION 3.5.1)
 
-
 if(NOT DEFINED HEPHAESTUS_VULKAN_HEADERS_DIR)
     message(FATAL_ERROR "HEPHAESTUS_VULKAN_HEADERS_DIR needs be be defined")
 endif()
