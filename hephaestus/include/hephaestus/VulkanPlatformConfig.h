@@ -29,16 +29,15 @@
 
 // Vulkan configuration
 // set the hephaestus dispatcher as the default one
-namespace hephaestus
-{
-    struct VulkanDispatcher;
-}
+namespace hephaestus { struct VulkanDispatcher; }
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::hephaestus::VulkanDispatcher
 #define VULKAN_HPP_DEFAULT_DISPATCHER hephaestus::VulkanDispatcher::GetInstance()
+
 // disable exceptions
 #define VULKAN_HPP_NO_EXCEPTIONS
-// forward to hephaestus assert so that we can mark unused variables
+
+// forward to hephaestus assert
 #define VULKAN_HPP_ASSERT HEPHAESTUS_ASSERT
 
 #include <vulkan/vulkan.hpp>

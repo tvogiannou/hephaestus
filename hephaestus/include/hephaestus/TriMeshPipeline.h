@@ -10,7 +10,7 @@
 
 namespace hephaestus
 {
-// Graphics pipeline that renders multiple meshes
+// Graphics pipeline that renders multiple (sub)meshes
 // - position/normal/uv/color vertex buffer
 // - projection & view matrix (using a uniform buffer)
 class TriMeshPipeline : public PipelineBase
@@ -21,10 +21,10 @@ public:
     {
         static const uint32_t IndexSize = sizeof(uint32_t);
 
-        float   x, y, z;		// position
-        float	nx, ny, nz;		// normal
-        float	u, v;			// uv coords
-        float   r, g, b/*, a*/;	// vertex color
+        float   x, y, z;    // position
+        float	nx, ny, nz; // normal
+        float	u, v;       // uv coords
+        float   r, g, b;    // vertex color
     };
 
     struct SetupParams 
@@ -74,7 +74,7 @@ private:
     VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;
     VulkanUtils::PipelineLayoutHandle m_pipelineLayout;
 
-    // "model" info, split into submeshes sharing a vertex and an index buffer
+    // "model" info, split into sub-meshes sharing a vertex and an index buffer
     VulkanUtils::BufferInfo m_indexBufferInfo;
     VkDeviceSize m_indexBufferCurSize; // size of data (in byte) currently set in the index buffer
     struct SubMeshInfo

@@ -9,17 +9,16 @@
 namespace hephaestus
 {
 
-// Graphics pipeline that renders primitive types (points & lines)
+// Graphics pipeline that renders primitive types (only lines at the moment)
 class PrimitivesPipeline : public PipelineBase
 {
 public:
-
     struct VertexData
     {
         static const uint32_t IndexSize = sizeof(uint32_t);
 
-        float   x, y, z;		// position
-        float   r, g, b/*, a*/;	// vertex color
+        float   x, y, z;    // position
+        float   r, g, b;    // vertex color
     };
 
 public:
@@ -33,13 +32,12 @@ public:
     // render data setup
     bool SetupPipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
 
-    // set line data
+    // add a set of points that would be treated as part of a continuous line strip
     bool AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo);
 
     void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
 
 private:
-
     bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
 
     // rendering pipeline setup

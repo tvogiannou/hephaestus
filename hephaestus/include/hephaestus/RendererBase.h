@@ -10,11 +10,13 @@
 namespace hephaestus
 {
 
-// Base class with common data for rendering pipelines
+// Base class with common data for setting up rendering pipelines
+// - single render pass
+// - command pool and buffer
+// - depth buffer image
 class RendererBase
 {
 public:
-
     using Color4 = std::array<float, 4>;
 
 protected:
@@ -55,4 +57,4 @@ private:
     void operator=(const RendererBase&) = delete;
 };
 
-}
+} // hephaestus

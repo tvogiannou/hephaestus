@@ -14,33 +14,42 @@
 namespace hephaestus
 {
 
+// Renderer class for targeting a swap chain (i.e. Vulkan abstraction for window systems)
+// see https://vulkan.lunarg.com/doc/view/1.1.92.1/windows/tutorial/html/05-init_swapchain.html
 class SwapChainRenderer : public RendererBase
 {
 public:
 
     struct RenderStats
     {
-        float waitTime;
-        float commandTime;
-        float queueTime;
-        float presentTime;
+        float waitTime;     // total time waiting for available frame
+        float commandTime;  // total time to record draw commands
+        float queueTime;    // total time submitting the command buffer to the graphics queue
+        float presentTime;  // total time submitting the command buffer to the present queue
     };
 
     enum RenderStatus : uint32_t
     {
-        eRENDER_STATUS_COMPLETE = 0,
-        eRENDER_STATUS_RESIZE,
-        eRENDER_STATUS_FAIL_WAIT_DEVICE,
-        eRENDER_STATUS_FAIL_ACQUIRE_IMAGE,
-        eRENDER_STATUS_FAIL_RESIZE,
-        eRENDER_STATUS_FAIL_PRESENT,
+        eRENDER_STATUS_COMPLETE = 0,        // Render stage has completed successfully
+        eRENDER_STATUS_RESIZE,              // Render stage was interrupted due 
+        eRENDER_STATUS_FAIL_WAIT_DEVICE,    // Failure while waiting for the device to finish any previous work
+        eRENDER_STATUS_FAIL_ACQUIRE_IMAGE,  // Failure acquiring the image of the next available frame
+        eRENDER_STATUS_FAIL_RESIZE,         // Failure while setting up the swap chain after a resize request
+        eRENDER_STATUS_FAIL_PRESENT,        // Failure submitting the command buffer to the present queue
     };
 
+    // Container for data relating to the rendering 
+    // see RenderBegin()/End() below
     struct RenderInfo 
     {
-        VulkanUtils::FrameUpdateInfo    frameInfo;
-        uint32_t                        virtualFrameIndex;
-        uint32_t                        imageIndex;
+        VulkanUtils::FrameUpdateInfo    frameInfo;  // info for the currently rendered frame
+
+    private:
+        friend class SwapChainRenderer;
+        uint32_t    virtualFrameIndex;  // index to the currently rendered virtual frame 
+                                        // (internal to class, should not be modified)
+        uint32_t    imageIndex;         // index to the image of the swap chain that is rendered currently
+                                        // (internal to class, should not be modified)
     };
 
 

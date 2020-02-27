@@ -10,6 +10,7 @@ namespace hephaestus
 {
 class PipelineBase;
 
+// Renderer class for targeting a windowless image buffer (headless)
 class HeadlessRenderer : public RendererBase
 {
 public:
@@ -57,10 +58,10 @@ public:
 
 private:
 
-    vk::Extent2D                    m_extent;
-    VulkanUtils::ImageInfo          m_frameImageInfo;
-    VulkanUtils::ImageInfo          m_dstImageInfo;
-    VulkanUtils::FramebufferHandle  m_framebuffer;	// framebuffer to store target image during command buffer processing
+    vk::Extent2D                    m_extent;           // size of the rendered target
+    VulkanUtils::FramebufferHandle  m_framebuffer;      // buffer for the rendered frame during command buffer processing
+    VulkanUtils::ImageInfo          m_frameImageInfo;   // image to use as render target
+    VulkanUtils::ImageInfo          m_dstImageInfo;     // image that can be loaded from host memory
 };
 
 } // namespace hephaestus

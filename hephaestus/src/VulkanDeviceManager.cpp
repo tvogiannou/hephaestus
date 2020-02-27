@@ -271,7 +271,8 @@ VulkanDeviceManager::CreatePresentSurface(HINSTANCE instance, HWND handle)
 
     vk::Win32SurfaceCreateInfoKHR surfaceInfo(
         vk::Win32SurfaceCreateFlagsKHR(), instance, handle);
-    HEPHAESTUS_CHECK_RESULT_HANDLE(m_presentSurface, m_instance->createWin32SurfaceKHRUnique(surfaceInfo, nullptr));
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_presentSurface, 
+        m_instance->createWin32SurfaceKHRUnique(surfaceInfo, nullptr));
 
     return true;
 }
@@ -285,7 +286,8 @@ VulkanDeviceManager::CreatePresentSurface(Display* display, Window handle)
 
     vk::XlibSurfaceCreateInfoKHR surfaceInfo(
         vk::XlibSurfaceCreateFlagsKHR(), display, handle);
-    m_presentSurface = m_instance->createXlibSurfaceKHRUnique(surfaceInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_presentSurface, 
+        m_instance->createXlibSurfaceKHRUnique(surfaceInfo, nullptr));
 
     return true;
 }
@@ -299,7 +301,8 @@ VulkanDeviceManager::CreatePresentSurface(ANativeWindow* platformWindow)
     vk::AndroidSurfaceCreateInfoKHR surfaceInfo(
         vk::AndroidSurfaceCreateFlagsKHR(),
         platformWindow);
-    m_presentSurface = m_instance->createAndroidSurfaceKHRUnique(surfaceInfo, nullptr);
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_presentSurface, 
+        m_instance->createAndroidSurfaceKHRUnique(surfaceInfo, nullptr));
 
     return true;
 }

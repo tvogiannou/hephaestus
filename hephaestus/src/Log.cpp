@@ -71,7 +71,6 @@ Logger::Log(MessageType msgType, const char* format, ...)
         constexpr uint32_t bufferSize = LOCAL_BUFFER_SIZE;
         char buffer[bufferSize];
 
-        // TODO: investigate alternatives/improvements
         va_list args;
         va_start(args, format);
         int r = std::vsnprintf(buffer, bufferSize, format, args);

@@ -235,6 +235,8 @@ public:
     static bool CreateRenderPass(const VulkanDeviceManager& deviceManager, 
         vk::Format format, vk::ImageLayout finalLayout, RenderPassHandle& renderPass);
 
+    // utility that makes sure that the allocation size for a mappable memory object adheres to device limitations
+    // see https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#memory-device-hostaccess
     static uint32_t FixupFlushRange(const VulkanDeviceManager& deviceManager, uint32_t size);
 };
 

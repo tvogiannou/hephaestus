@@ -19,7 +19,8 @@ class PipelineBase
 {
 public:
 
-    struct /*alignas(16)*/ UBOData
+    // some basic data for Uniform Buffer Objects (modelview matrices & position for a light source)
+    struct UBOData
     {
         static const uint32_t UniformSize = 36 * sizeof(float);
 
@@ -28,13 +29,16 @@ public:
         std::array<float, 4> lightPos = { { 0.0f, 1.0f, 5.0f, 1.0f } };
     };
 
+    // helper for defining a small set of shaders and indices to the ones that should be used by the pipeline
     struct ShaderParams
     {
         explicit ShaderParams(const VulkanUtils::ShaderDB& _shaderDB) : shaderDB(_shaderDB) {}
 
         const VulkanUtils::ShaderDB& shaderDB;
-        VulkanUtils::ShaderDB::ShaderDBIndex vertexShaderIndex;
-        VulkanUtils::ShaderDB::ShaderDBIndex fragmentShaderIndex;
+        VulkanUtils::ShaderDB::ShaderDBIndex vertexShaderIndex;     // index to the shader module in shaderDB 
+                                                                    // that should be used as the vertex shader
+        VulkanUtils::ShaderDB::ShaderDBIndex fragmentShaderIndex;   // index to the shader module in shaderDB
+                                                                    // that should be used as the fragment shader
     };
 
     explicit PipelineBase(const VulkanDeviceManager& _deviceManager) :
@@ -46,8 +50,8 @@ public:
     void Clear();
 
     // buffer setup & update
-    void CreateDescriptorPool(uint32_t uniformSize = 5, uint32_t combinedImgSamplerSize = 5);
-    void CreateStageBuffer(uint32_t stageSize = 1000000);
+    void CreateDescriptorPool(uint32_t uniformSize = 5u, uint32_t combinedImgSamplerSize = 5u);
+    void CreateStageBuffer(uint32_t stageSize = 1000000u);
     bool CreateVertexBuffer(uint32_t size);
     bool CreateUniformBuffer(uint32_t bufferSize);
     bool UpdateUniformBufferData(const VulkanUtils::BufferUpdateInfo& updateInfo);

@@ -21,7 +21,7 @@
 namespace hephaestus
 {
 // Simple stateless logger, handles formatting and forwards messages to callback
-// Default backed by std io (printf)
+// Default backed by std io (printf) or __android_log_print in Android
 class Logger
 {
 public:

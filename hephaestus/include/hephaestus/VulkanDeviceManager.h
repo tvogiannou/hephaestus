@@ -9,16 +9,17 @@
 
 namespace hephaestus
 {
-
+// Class for dealing with the core management of the Vulkan device
+// - container for Vulkan device, instance & queues
+// - optionally setups the present surface (extension)
 class VulkanDeviceManager
 {
 public:
-
     static std::vector<char const*> GetDeviceRequiredExtensions();
     static std::vector<char const*> GetInstanceRequiredExtensions(bool enableValidationLayers);
 
 public:
-
+    VulkanDeviceManager() = default;
     ~VulkanDeviceManager() { WaitDevice(); }
 
     struct PlatformWindowInfo
@@ -66,15 +67,15 @@ private:
 #endif
 
 private:
-    vk::UniqueHandle<vk::Instance, VulkanDispatcher> m_instance;
-    vk::UniqueHandle<vk::Device, VulkanDispatcher> m_device;
-    vk::PhysicalDevice m_physicalDevice;
-    vk::UniqueHandle<vk::SurfaceKHR, VulkanDispatcher> m_presentSurface;
-    VulkanUtils::QueueInfo m_graphicsQueueInfo;
-    VulkanUtils::QueueInfo m_presentQueueInfo;
+    vk::UniqueHandle<vk::Instance, VulkanDispatcher>    m_instance;
+    vk::UniqueHandle<vk::Device, VulkanDispatcher>      m_device;
+    vk::PhysicalDevice                                  m_physicalDevice;
+    vk::UniqueHandle<vk::SurfaceKHR, VulkanDispatcher>  m_presentSurface;
+    VulkanUtils::QueueInfo                              m_graphicsQueueInfo;
+    VulkanUtils::QueueInfo                              m_presentQueueInfo;
 
     // debugging
     vk::UniqueHandle<vk::DebugUtilsMessengerEXT, VulkanDispatcher> m_debugMessenger;
 };
 
-}
+} // hephaestus

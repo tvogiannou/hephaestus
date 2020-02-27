@@ -70,8 +70,8 @@ HeadlessRenderer::Init(const InitInfo& info)
     // create framebuffer
     {
         std::array<vk::ImageView, 2> attachments = {
-        m_frameImageInfo.view.get(),
-        m_depthImageInfo.view.get()
+            m_frameImageInfo.view.get(),
+            m_depthImageInfo.view.get()
         };
 
         // setup the framebuffer for the currently rendered image
