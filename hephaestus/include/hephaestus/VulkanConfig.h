@@ -29,10 +29,14 @@
 
 // Vulkan configuration
 // set the hephaestus dispatcher as the default one
-namespace hephaestus { struct VulkanDispatcher; }
+namespace hephaestus 
+{ 
+    struct VulkanDispatcher; 
+    const VulkanDispatcher& GetVulkanDispatcherInstance();
+}
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::hephaestus::VulkanDispatcher
-#define VULKAN_HPP_DEFAULT_DISPATCHER hephaestus::VulkanDispatcher::GetInstance()
+#define VULKAN_HPP_DEFAULT_DISPATCHER hephaestus::GetVulkanDispatcherInstance()
 
 // disable exceptions
 #define VULKAN_HPP_NO_EXCEPTIONS

@@ -20,6 +20,13 @@ VulkanDispatcher& VulkanDispatcher::GetInstance()
     return s_dispatcherInstance;
 }
 
+// function used by Vulkan hpp header
+const VulkanDispatcher& GetVulkanDispatcherInstance()
+{
+    return VulkanDispatcher::GetInstance();
+}
+
+
 void 
 VulkanDispatcher::InitFromLibrary(ModuleType vulkanLibrary)
 {
