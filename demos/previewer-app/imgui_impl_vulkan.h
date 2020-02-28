@@ -15,7 +15,7 @@
 
 #include <imgui.h>
 
-// Function dispatcher for dynamic Vulkan loading
+// config Vulkan for hephaestus and setup dispatcher 
 #include <hephaestus/VulkanConfig.h>
 #include <vulkan/vulkan.h>
 
@@ -36,8 +36,6 @@ struct ImGui_ImplVulkan_InitInfo
     VkDescriptorPool                DescriptorPool;
     const VkAllocationCallbacks*    Allocator;
     void                            (*CheckVkResultFn)(VkResult err);
-
-	const hephaestus::VulkanDispatcher* dispatcher;
 };
 
 // Called by user code

@@ -44,7 +44,6 @@ VulkanWindowRenderer::ImGuiPipeline::SetupPipeline(
     init_info.DescriptorPool = VkDescriptorPool(m_descriptorPool.get());
     init_info.Allocator = VK_NULL_HANDLE;
     init_info.CheckVkResultFn = check_vk_result;
-    init_info.dispatcher = &VulkanDispatcher::GetInstance();
 
     if (!ImGui_ImplVulkan_Init(&init_info, VkRenderPass(renderPass)))
         return false;

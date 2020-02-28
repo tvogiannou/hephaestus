@@ -726,7 +726,6 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass rend
     IM_ASSERT(info->Queue != VK_NULL_HANDLE);
     IM_ASSERT(info->DescriptorPool != VK_NULL_HANDLE);
     IM_ASSERT(render_pass != VK_NULL_HANDLE);
-	IM_ASSERT(info->dispatcher != nullptr);
 
     g_Instance = info->Instance;
     g_PhysicalDevice = info->PhysicalDevice;
@@ -738,7 +737,7 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass rend
     g_DescriptorPool = info->DescriptorPool;
     g_Allocator = info->Allocator;
     g_CheckVkResultFn = info->CheckVkResultFn;
-	g_dispatcher = info->dispatcher;
+	g_dispatcher = &hephaestus::GetVulkanDispatcherInstance();
 
     ImGui_ImplVulkan_CreateDeviceObjects();
 
