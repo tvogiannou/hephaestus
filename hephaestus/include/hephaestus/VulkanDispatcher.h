@@ -29,7 +29,6 @@ struct VulkanDispatcher
     static void LoadInstanceFunctions(const vk::Instance& instance);
     static void LoadDeviceFunctions(const vk::Device& device);
 
-
     // always exported functions
     HEPHAESTUS_VULKAN_EXPORTEDFUNCTION_DECLARATION(vkGetInstanceProcAddr);
 

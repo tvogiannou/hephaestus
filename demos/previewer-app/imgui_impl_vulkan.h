@@ -17,6 +17,7 @@
 
 // config Vulkan for hephaestus and setup dispatcher 
 #include <hephaestus/VulkanConfig.h>
+
 #include <vulkan/vulkan.h>
 
 #include <hephaestus/VulkanDispatcher.h>

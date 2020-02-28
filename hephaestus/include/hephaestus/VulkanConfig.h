@@ -44,4 +44,6 @@ namespace hephaestus
 // forward to hephaestus assert
 #define VULKAN_HPP_ASSERT HEPHAESTUS_ASSERT
 
+#define VK_NO_PROTOTYPES
+
 #include <vulkan/vulkan.hpp>

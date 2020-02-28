@@ -35,6 +35,27 @@
 
 static const hephaestus::VulkanDispatcher* g_dispatcher = nullptr;
 
+// define all functions used in the file
+PFN_vkMapMemory vkMapMemory;
+vkDestroyBuffer;
+PFN_vkMapMemory vkDestroyBuffer;
+vkCmdSetViewport;
+vkCmdPushConstants;
+
+PFN_vkMapMemory vkFreeMemory;
+vkAllocateMemory;
+vkBindBufferMemory;
+vkFlushMappedMemoryRanges;
+vkUnmapMemory;
+
+vkCmdBindPipeline;
+vkCmdBindDescriptorSets;
+vkCmdBindVertexBuffers;
+vkCmdBindIndexBuffer;
+
+vkGetPhysicalDeviceMemoryProperties;
+vkGetBufferMemoryRequirements;
+
 
 
 // Vulkan data
@@ -230,9 +251,9 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
     {
         ImDrawVert* vtx_dst = NULL;
         ImDrawIdx* idx_dst = NULL;
-        err = g_dispatcher->vkMapMemory(g_Device, fd->VertexBufferMemory, 0, vertex_size, 0, (void**)(&vtx_dst));
+        err = /*g_dispatcher->*/vkMapMemory(g_Device, fd->VertexBufferMemory, 0, vertex_size, 0, (void**)(&vtx_dst));
         check_vk_result(err);
-        err = g_dispatcher->vkMapMemory(g_Device, fd->IndexBufferMemory, 0, index_size, 0, (void**)(&idx_dst));
+        err = /*g_dispatcher->*/vkMapMemory(g_Device, fd->IndexBufferMemory, 0, index_size, 0, (void**)(&idx_dst));
         check_vk_result(err);
         for (int n = 0; n < draw_data->CmdListsCount; n++)
         {
@@ -436,7 +457,7 @@ bool ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer)
     // Upload to Buffer:
     {
         char* map = NULL;
-        err = g_dispatcher->vkMapMemory(g_Device, g_UploadBufferMemory, 0, upload_size, 0, (void**)(&map));
+        err = /*g_dispatcher->*/vkMapMemory(g_Device, g_UploadBufferMemory, 0, upload_size, 0, (void**)(&map));
         check_vk_result(err);
         memcpy(map, pixels, upload_size);
         VkMappedMemoryRange range[1] = {};
@@ -717,6 +738,9 @@ void    ImGui_ImplVulkan_InvalidateDeviceObjects()
 
 bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass)
 {
+    // XXX
+    vkMapMemory = hephaestus::VulkanDispatcher::GetInstance().vkMapMemory;
+
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_vulkan";
 
