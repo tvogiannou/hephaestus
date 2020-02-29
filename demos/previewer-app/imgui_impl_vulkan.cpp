@@ -35,26 +35,27 @@
 
 static const hephaestus::VulkanDispatcher* g_dispatcher = nullptr;
 
+#define VULKAN_EXPORTEDFUNCTION_DECLARATION(fun) PFN_##fun fun = 0
+
 // define all functions used in the file
-PFN_vkMapMemory vkMapMemory;
-vkDestroyBuffer;
-PFN_vkMapMemory vkDestroyBuffer;
-vkCmdSetViewport;
-vkCmdPushConstants;
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkDestroyBuffer);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkCmdSetViewport);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkCmdPushConstants);
 
-PFN_vkMapMemory vkFreeMemory;
-vkAllocateMemory;
-vkBindBufferMemory;
-vkFlushMappedMemoryRanges;
-vkUnmapMemory;
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkAllocateMemory);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkFreeMemory);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkMapMemory);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkUnmapMemory);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkFlushMappedMemoryRanges);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkBindBufferMemory);
 
-vkCmdBindPipeline;
-vkCmdBindDescriptorSets;
-vkCmdBindVertexBuffers;
-vkCmdBindIndexBuffer;
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkCmdBindPipeline);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkCmdBindDescriptorSets);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkCmdBindVertexBuffers);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkCmdBindIndexBuffer);
 
-vkGetPhysicalDeviceMemoryProperties;
-vkGetBufferMemoryRequirements;
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkGetPhysicalDeviceMemoryProperties);
+VULKAN_EXPORTEDFUNCTION_DECLARATION(vkGetBufferMemoryRequirements);
 
 
 
