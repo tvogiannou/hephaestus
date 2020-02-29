@@ -13,14 +13,12 @@
 
 #pragma once
 
-#include <imgui.h>
-
 // config Vulkan for hephaestus and setup dispatcher 
 #include <hephaestus/VulkanConfig.h>
+#include "hephaestus/VulkanFunctions.inl"
 
+#include <imgui.h>
 #include <vulkan/vulkan.h>
-
-#include <hephaestus/VulkanDispatcher.h>
 
 
 #define IMGUI_VK_QUEUED_FRAMES      3

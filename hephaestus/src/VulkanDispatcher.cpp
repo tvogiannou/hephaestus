@@ -4,11 +4,20 @@
 #include <hephaestus/Log.h>
 
 
-
 #define HEPHAESTUS_VK_DISPATCHER_LOAD_GLOBAL_FUNCTION(fun) VulkanDispatcher::GetInstance().fun = \
-    (PFN_##fun)VulkanDispatcher::GetInstance().vkGetInstanceProcAddr(nullptr, #fun)
+    (PFN_##fun)VulkanDispatcher::GetInstance().vkGetInstanceProcAddr(nullptr, #fun); \
+    ::fun = VulkanDispatcher::GetInstance().fun
 #define HEPHAESTUS_VK_DISPATCHER_LOAD_OBJECT_FUNCTION(fun, object) VulkanDispatcher::GetInstance().fun = \
-    (PFN_##fun)object.getProcAddr(#fun, VulkanDispatcher::GetInstance())
+    (PFN_##fun)object.getProcAddr(#fun, VulkanDispatcher::GetInstance()); \
+    ::fun = VulkanDispatcher::GetInstance().fun
+
+
+// define all function symbols we are loading with the dispatcher so that they can be resolved 
+// when linking with code that is referencing the Vulkan C API
+#define VULKAN_EXPORTEDFUNCTION_DECLARATION(fun) PFN_##fun fun = 0
+#include <hephaestus/VulkanFunctions.inl>
+#undef VULKAN_EXPORTEDFUNCTION_DECLARATION
+
 
 namespace hephaestus
 {
