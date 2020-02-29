@@ -21,7 +21,7 @@ add_subdirectory(	"${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/glfw-3.3"
                     EXCLUDE_FROM_ALL)
 
 # add imgui
-add_subdirectory("${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/imgui-1.69-src" ${CMAKE_CURRENT_BINARY_DIR}/imgui-build)
+add_subdirectory("${HEPHAESTUS_EXTERNAL_DEPENDENCIES_LOCATION}/imgui-1.75-src" ${CMAKE_CURRENT_BINARY_DIR}/imgui-build)
 
 # add sources
 set(APP_SOURCE_FILES 

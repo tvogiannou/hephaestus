@@ -1,5 +1,6 @@
 #include "WindowRenderer.h"
 
+#include <imgui.h>
 #include "imgui_impl_vulkan.h"
 #include <hephaestus/Log.h>
 #include <common/Camera.h>
@@ -42,6 +43,9 @@ VulkanWindowRenderer::ImGuiPipeline::SetupPipeline(
     init_info.Queue = VkQueue(m_deviceManager.GetGraphicsQueueInfo().queue);
     init_info.PipelineCache = VK_NULL_HANDLE;
     init_info.DescriptorPool = VkDescriptorPool(m_descriptorPool.get());
+    init_info.MinImageCount = 2u;
+    init_info.ImageCount = 3u;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     init_info.Allocator = VK_NULL_HANDLE;
     init_info.CheckVkResultFn = check_vk_result;
 
@@ -80,7 +84,7 @@ VulkanWindowRenderer::ImGuiPipeline::SetupPipeline(
 
         err = VulkanDispatcher::GetInstance().vkDeviceWaitIdle(init_info.Device);
         check_vk_result(err);
-        ImGui_ImplVulkan_InvalidateFontUploadObjects();
+        ImGui_ImplVulkan_DestroyFontUploadObjects();
     }
 
     return true;
