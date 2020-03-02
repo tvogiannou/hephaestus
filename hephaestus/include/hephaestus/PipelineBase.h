@@ -5,8 +5,6 @@
 #include <hephaestus/VulkanDeviceManager.h>
 #include <hephaestus/VulkanUtils.h>
 
-#include <array>
-
 
 namespace hephaestus
 {

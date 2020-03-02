@@ -5,6 +5,7 @@
 #include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/PipelineBase.h>
 
+#include <array>
 #include <vector>
 
 
@@ -29,11 +30,11 @@ public:
     // 
     struct UniformBufferData
     {
-        static const uint32_t UniformSize = 36 * sizeof(float);
+        static const uint32_t UniformSize = 36u * sizeof(float);
 
-        std::array<float, 16> projection = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
-        std::array<float, 16> model = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
-        std::array<float, 4> lightPos = { { 0.0f, 1.0f, 5.0f, 1.0f } };     // light source for demo purposes
+        // [0-15]  -> 4x4 projection matrix
+        // [16-31] -> 4x4 modelview matrix
+        std::array<char, UniformSize> raw;
     };
 
     struct SetupParams 

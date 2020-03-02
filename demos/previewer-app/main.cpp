@@ -366,6 +366,9 @@ int main(/*int argc, char** argv*/)
             projection.GetRaw(matrixData);
             CHECK_EXIT_MSG(renderer.m_graphicsPipeline.UpdateProjectionMatrix(matrixData, renderer.GetCmdBuffer()),
                 "Failed to update projection matrix");
+
+            CHECK_EXIT_MSG(renderer.m_graphicsPipeline.UpdateLightPos(
+                { { 0.0f, 1.0f, 5.0f, 1.0f } }, renderer.GetCmdBuffer()), "Failed to update light position");
         }
 
         // primitive pipeline setup

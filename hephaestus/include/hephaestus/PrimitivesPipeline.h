@@ -5,6 +5,8 @@
 #include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/PipelineBase.h>
 
+#include <array>
+
 
 namespace hephaestus
 {
@@ -27,8 +29,9 @@ public:
     {
         static const uint32_t UniformSize = 32 * sizeof(float);
 
-        std::array<float, 16> projection = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
-        std::array<float, 16> view = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
+        // [0-15]  -> 4x4 projection matrix
+        // [16-31] -> 4x4 modelview matrix
+        std::array<char, UniformSize> raw;
     };
 
 public:
@@ -48,17 +51,9 @@ public:
     void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const;
 
     // projection 4x4 matrix for primitives
-    bool UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
-    {
-        m_uniformbBufferData.projection = projectionMatrix;
-        return PrimitivesPipeline::UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
-    }
+    bool UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
     // global 4x4 view matrix for primitives, typically not needed
-    bool UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
-    {
-        m_uniformbBufferData.view = viewMatrix;
-        return PrimitivesPipeline::UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
-    }
+    bool UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer);
 
 
 private:
@@ -73,7 +68,7 @@ private:
     
     // uniform buffer with modelview & projection matrix for all primitives rendered
     VulkanUtils::BufferInfo m_uniformBufferInfo;
-    UniformBufferData m_uniformbBufferData;
+    UniformBufferData m_uniformBufferData;
 
     std::vector<VkDeviceSize> m_lineStripOffsets;  // offsets to the vertex buffer
 };

@@ -38,6 +38,22 @@ PrimitivesPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frame
 }
 
 bool 
+PrimitivesPipeline::UpdateProjectionMatrix(
+    const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
+{
+    std::memcpy(m_uniformBufferData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
+    return PrimitivesPipeline::UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+}
+
+bool 
+PrimitivesPipeline::UpdateViewMatrix(
+    const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
+{
+    std::memcpy(&m_uniformBufferData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
+    return PrimitivesPipeline::UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+}
+
+bool 
 PrimitivesPipeline::AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
     if (!VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, 
@@ -224,21 +240,11 @@ PrimitivesPipeline::CreatePipeline(
 bool 
 PrimitivesPipeline::UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer)
 {
-    const uint32_t buffSize =
-        VulkanUtils::FixupFlushRange(m_deviceManager, UniformBufferData::UniformSize);
-
-    std::vector<char> tempBuffer;
-    tempBuffer.resize(buffSize);
-    {
-        std::memcpy(&tempBuffer[0], m_uniformbBufferData.projection.data(), 16 * sizeof(float));
-        std::memcpy(&tempBuffer[16 * sizeof(float)], m_uniformbBufferData.view.data(), 16 * sizeof(float));
-    }
-
     VulkanUtils::BufferUpdateInfo updateInfo;
     {
         updateInfo.copyCmdBuffer = copyCmdBuffer;
-        updateInfo.data = tempBuffer.data();
-        updateInfo.dataSize = buffSize;
+        updateInfo.data = m_uniformBufferData.raw.data();
+        updateInfo.dataSize = (uint32_t)m_uniformBufferData.raw.size();
     }
 
     return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, uniformBufferInfo);
