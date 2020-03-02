@@ -22,6 +22,8 @@
 
 #pragma once
 
+// use function dispatcher from hephaestus
+// TODO: consider moving this to imconfig.h
 #include <hephaestus/VulkanConfig.h>
 #include <hephaestus/VulkanFunctions.inl>
 

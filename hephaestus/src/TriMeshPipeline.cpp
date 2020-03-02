@@ -321,6 +321,15 @@ TriMeshPipeline::CreatePipeline(vk::RenderPass renderPass,
     return true;
 }
 
+bool
+TriMeshPipeline::CreateUniformBuffer(uint32_t bufferSize)
+{
+    return VulkanUtils::CreateBuffer(m_deviceManager, bufferSize,
+        vk::BufferUsageFlagBits::eUniformBuffer,
+        vk::MemoryPropertyFlagBits::eHostVisible,
+        m_uniformBufferInfo);
+}
+
 bool 
 TriMeshPipeline::MeshSetTextureData(MeshIDType meshId, 
     const VulkanUtils::TextureUpdateInfo& textureUpdateInfo)
@@ -434,6 +443,64 @@ TriMeshPipeline::MeshUpdateVertexData(MeshIDType meshId,
     MeshInfo& meshIdInfo = m_MeshInfos[meshId];
     return VulkanUtils::CopyBufferDataHost(
         m_deviceManager, updateInfo, m_vertexBufferInfo, meshIdInfo.vertexOffset);
+}
+
+bool
+TriMeshPipeline::UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
+{
+    m_uniformBufferData.projection = projectionMatrix;
+
+    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+}
+
+bool
+TriMeshPipeline::UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
+{
+    m_uniformBufferData.model = viewMatrix;
+
+    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+}
+
+bool
+TriMeshPipeline::UpdateViewAndProjectionMatrix(
+    const std::array<float, 16>& viewMatrix, const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
+{
+    m_uniformBufferData.model = viewMatrix;
+    m_uniformBufferData.projection = projectionMatrix;
+
+    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+}
+
+bool
+TriMeshPipeline::UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer)
+{
+    m_uniformBufferData.lightPos = lightPos;
+
+    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+}
+
+bool
+TriMeshPipeline::UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer)
+{
+    const uint32_t buffSize =
+        VulkanUtils::FixupFlushRange(m_deviceManager, UniformBufferData::UniformSize);
+
+    std::vector<char> tempBuffer;
+    tempBuffer.resize(buffSize);
+    {
+        std::memcpy(&tempBuffer[0], m_uniformBufferData.projection.data(), 16 * sizeof(float));
+        std::memcpy(&tempBuffer[16 * sizeof(float)], m_uniformBufferData.model.data(), 16 * sizeof(float));
+        std::memcpy(&tempBuffer[32 * sizeof(float)], m_uniformBufferData.lightPos.data(), 4 * sizeof(float));
+    }
+
+    VulkanUtils::BufferUpdateInfo updateInfo;
+    {
+        updateInfo.copyCmdBuffer = copyCmdBuffer;
+        updateInfo.data = tempBuffer.data();
+        updateInfo.dataSize = buffSize;
+    }
+
+    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, uniformBufferInfo);
 }
 
 } // hephaestus

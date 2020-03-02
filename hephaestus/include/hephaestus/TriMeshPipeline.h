@@ -16,7 +16,6 @@ namespace hephaestus
 class TriMeshPipeline : public PipelineBase
 {
 public:
-
     struct VertexData
     {
         static const uint32_t IndexSize = sizeof(uint32_t);
@@ -25,6 +24,16 @@ public:
         float	nx, ny, nz; // normal
         float	u, v;       // uv coords
         float   r, g, b;    // vertex color
+    };
+
+    // 
+    struct UniformBufferData
+    {
+        static const uint32_t UniformSize = 36 * sizeof(float);
+
+        std::array<float, 16> projection = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
+        std::array<float, 16> model = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
+        std::array<float, 4> lightPos = { { 0.0f, 1.0f, 5.0f, 1.0f } };     // light source for demo purposes
     };
 
     struct SetupParams 
@@ -43,6 +52,7 @@ public:
 
     // Resources shared by all meshes
     bool CreateIndexBuffer(uint32_t size);
+    bool CreateUniformBuffer(uint32_t bufferSize);
 
     // mesh API
     using MeshIDType = uint32_t;
@@ -54,6 +64,14 @@ public:
     bool MeshSetTextureData(MeshIDType meshId, const VulkanUtils::TextureUpdateInfo& textureUpdateInfo);
     void MeshSetVisible(uint32_t meshId, bool visible);
 
+    // update uniform buffer data
+    bool UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
+    bool UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer);
+    bool UpdateViewAndProjectionMatrix(
+        const std::array<float, 16>& viewMatrix, const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
+    bool UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer);
+    bool UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer);
+
     // Setup internal/Vulkan data, call after setting all mesh data
     bool SetupPipeline(vk::RenderPass renderPass, 
         const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
@@ -63,7 +81,7 @@ public:
 private:
 
     // pipeline setup
-    bool SetupDescriptorSets() override;
+    bool SetupDescriptorSets();
     void SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
         const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo);
 
@@ -73,6 +91,10 @@ private:
     // rendering pipeline setup
     VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;
     VulkanUtils::PipelineLayoutHandle m_pipelineLayout;
+
+    // uniform buffer object data with model view transform + a light
+    VulkanUtils::BufferInfo m_uniformBufferInfo;
+    UniformBufferData m_uniformBufferData;
 
     // meshes are sharing a vertex and an index buffer
     VulkanUtils::BufferInfo m_indexBufferInfo;

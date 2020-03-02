@@ -157,6 +157,7 @@ bool
 VulkanWindowRenderer::Init()
 {
     HEPHAESTUS_LOG_ASSERT(m_deviceManager.GetDevice(), "No Vulkan device available");
+    m_deviceManager.WaitDevice();
 
     SwapChainRenderer::InitInfo baseInfo = {};
     if (!SwapChainRenderer::Init(baseInfo))

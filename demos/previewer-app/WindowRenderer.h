@@ -48,9 +48,9 @@ public:
     void UpdateCamera(const Camera& camera);
 
     // pipelines
-    TriMeshPipeline m_graphicsPipeline;
-    PrimitivesPipeline m_primitivePipeline;
-    ImGuiPipeline m_imguiPipeline;
+    TriMeshPipeline     m_graphicsPipeline;
+    PrimitivesPipeline  m_primitivePipeline;
+    ImGuiPipeline       m_imguiPipeline;
 };
 
 } // namespace hephaestus

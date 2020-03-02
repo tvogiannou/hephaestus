@@ -218,6 +218,95 @@ PrimitivesPipeline::CreatePipeline(
     return true;
 }
 
+bool 
+PrimitivesPipeline::UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer)
+{
+    const uint32_t buffSize =
+        VulkanUtils::FixupFlushRange(m_deviceManager, UniformBufferData::UniformSize);
+
+    std::vector<char> tempBuffer;
+    tempBuffer.resize(buffSize);
+    {
+        std::memcpy(&tempBuffer[0], m_uniformbBufferData.projection.data(), 16 * sizeof(float));
+        std::memcpy(&tempBuffer[16 * sizeof(float)], m_uniformbBufferData.view.data(), 16 * sizeof(float));
+    }
+
+    VulkanUtils::BufferUpdateInfo updateInfo;
+    {
+        updateInfo.copyCmdBuffer = copyCmdBuffer;
+        updateInfo.data = tempBuffer.data();
+        updateInfo.dataSize = buffSize;
+    }
+
+    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, uniformBufferInfo);
+}
+
+bool
+PrimitivesPipeline::CreateUniformBuffer(uint32_t bufferSize)
+{
+    return VulkanUtils::CreateBuffer(m_deviceManager, bufferSize,
+        vk::BufferUsageFlagBits::eUniformBuffer,
+        vk::MemoryPropertyFlagBits::eHostVisible,
+        m_uniformBufferInfo);
+}
+
+bool
+PrimitivesPipeline::SetupDescriptorSets()
+{
+    if (!m_descriptorPool)
+        return false;
+
+    // create layouts
+    {
+        std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
+        layoutBindings.emplace_back(
+            0,
+            vk::DescriptorType::eUniformBuffer,
+            1,
+            vk::ShaderStageFlagBits::eVertex,
+            nullptr);
+
+        vk::DescriptorSetLayoutCreateInfo layoutCreateInfo(
+            vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
+
+        HEPHAESTUS_CHECK_RESULT_HANDLE(m_descriptorSetLayout,
+            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr));
+    }
+
+    // allocate descriptor set
+    {
+        vk::DescriptorSetAllocateInfo allocInfo(
+            m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
+        std::vector<vk::DescriptorSet> descSet;
+        HEPHAESTUS_CHECK_RESULT_RAW(descSet, m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo));
+
+        vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
+            m_deviceManager.GetDevice(), m_descriptorPool.get());
+        m_descriptorSetInfo.handle =
+            VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
+    }
+
+    vk::DescriptorBufferInfo bufferInfo(
+        m_uniformBufferInfo.bufferHandle.get(),
+        0,		// offset
+        m_uniformBufferInfo.size);
+
+    std::vector<vk::WriteDescriptorSet> descriptorWrites;
+    descriptorWrites.emplace_back(
+        m_descriptorSetInfo.handle.get(),
+        0,		// destination binding
+        0,		// destination array element
+        1,		// descriptor count
+        vk::DescriptorType::eUniformBuffer,
+        nullptr,
+        &bufferInfo,	// buffer info
+        nullptr);
+
+    m_deviceManager.GetDevice().updateDescriptorSets(descriptorWrites, nullptr);
+
+    return true;
+}
+
 void 
 PrimitivesPipeline::Clear()
 {

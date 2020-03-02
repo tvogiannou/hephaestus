@@ -14,20 +14,9 @@ namespace hephaestus
 // - stage buffer to re-use
 // - vertex buffer
 // - descriptor pool
-// - uniform buffer object data for passing model view matrix to shader
 class PipelineBase
 {
 public:
-
-    // some basic data for Uniform Buffer Objects (modelview matrices & position for a light source)
-    struct UBOData
-    {
-        static const uint32_t UniformSize = 36 * sizeof(float);
-
-        std::array<float, 16> projection = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
-        std::array<float, 16> model = { { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f } };
-        std::array<float, 4> lightPos = { { 0.0f, 1.0f, 5.0f, 1.0f } };
-    };
 
     // helper for defining a small set of shaders and indices to the ones that should be used by the pipeline
     struct ShaderParams
@@ -53,25 +42,12 @@ public:
     void CreateDescriptorPool(uint32_t uniformSize = 5u, uint32_t combinedImgSamplerSize = 5u);
     void CreateStageBuffer(uint32_t stageSize = 1000000u);
     bool CreateVertexBuffer(uint32_t size);
-    bool CreateUniformBuffer(uint32_t bufferSize);
     bool AppendVertexData(const VulkanUtils::BufferUpdateInfo& updateInfo);
-
-    // update UBO data
-    bool UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateViewAndProjectionMatrix(
-        const std::array<float, 16>& viewMatrix, const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateUBO(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer);
 
     // internal
     vk::DescriptorPool GetDescriptorPool() const { return m_descriptorPool.get(); }
     const VulkanUtils::BufferInfo& GetVertexBufferInfo() const { return m_vertexBufferInfo; }
     const VulkanDeviceManager& GetDeviceManager() const { return m_deviceManager; }
-
-    // override to setup more descriptor sets
-    // TODO: make this less error prone
-    virtual bool SetupDescriptorSets();
 
 protected:
 
@@ -84,10 +60,6 @@ protected:
     VulkanUtils::DescriptorPoolHandle m_descriptorPool;
     VulkanUtils::DescriptorSetLayoutHandle m_descriptorSetLayout;
     VulkanUtils::DescriptorSetInfo m_descriptorSetInfo;
-
-    // uniform buffer object data with model view transform + a light/general purpose transform
-    VulkanUtils::BufferInfo m_uniformBufferInfo;
-    UBOData m_uboData;
 
     // data buffers
     VulkanUtils::BufferInfo m_stageBufferInfo;	// stage buffer for temporary data

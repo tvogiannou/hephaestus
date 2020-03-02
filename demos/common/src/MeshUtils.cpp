@@ -178,7 +178,7 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
     // add uniform buffer
     {
         const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-            outPipeline.GetDeviceManager(), PipelineBase::UBOData::UniformSize);
+            outPipeline.GetDeviceManager(), TriMeshPipeline::UniformBufferData::UniformSize);
         if (!outPipeline.CreateUniformBuffer(bufferSize))
             return false;
     }
@@ -217,7 +217,7 @@ MeshUtils::SetupPrimitivesPipeline(
         return false;
 
     const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-            outPipeline.GetDeviceManager(), PipelineBase::UBOData::UniformSize);
+            outPipeline.GetDeviceManager(), PrimitivesPipeline::UniformBufferData::UniformSize);
     if (!outPipeline.CreateUniformBuffer(bufferSize))
         return false;
 
