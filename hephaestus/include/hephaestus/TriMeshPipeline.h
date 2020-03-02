@@ -30,10 +30,11 @@ public:
     // 
     struct UniformBufferData
     {
-        static const uint32_t UniformSize = 36u * sizeof(float);
+        static const uint32_t UniformSize = 48u * sizeof(float);
 
         // [0-15]  -> 4x4 projection matrix
         // [16-31] -> 4x4 modelview matrix
+        // [32-47] -> misc shader data (e.g. light source position)
         std::array<char, UniformSize> raw;
     };
 
