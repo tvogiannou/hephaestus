@@ -52,6 +52,9 @@ TriMeshPipeline::SetupPipeline(vk::RenderPass renderPass,
     const PipelineBase::ShaderParams& shaderParams,
     const TriMeshPipeline::SetupParams& params)
 {
+    if (!CreateUniformBuffer())
+        return false;
+
     if (!SetupDescriptorSets())
         return false;
 
@@ -322,8 +325,11 @@ TriMeshPipeline::CreatePipeline(vk::RenderPass renderPass,
 }
 
 bool
-TriMeshPipeline::CreateUniformBuffer(uint32_t bufferSize)
+TriMeshPipeline::CreateUniformBuffer()
 {
+    const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
+        m_deviceManager, TriMeshPipeline::UniformBufferData::UniformSize);
+
     return VulkanUtils::CreateBuffer(m_deviceManager, bufferSize,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::MemoryPropertyFlagBits::eHostVisible,
@@ -449,7 +455,6 @@ bool
 TriMeshPipeline::UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     m_uniformBufferData.projection = projectionMatrix;
-
     return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
 }
 
@@ -457,7 +462,6 @@ bool
 TriMeshPipeline::UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     m_uniformBufferData.model = viewMatrix;
-
     return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
 }
 
@@ -467,7 +471,6 @@ TriMeshPipeline::UpdateViewAndProjectionMatrix(
 {
     m_uniformBufferData.model = viewMatrix;
     m_uniformBufferData.projection = projectionMatrix;
-
     return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
 }
 

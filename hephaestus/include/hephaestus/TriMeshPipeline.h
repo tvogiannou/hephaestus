@@ -52,7 +52,6 @@ public:
 
     // Resources shared by all meshes
     bool CreateIndexBuffer(uint32_t size);
-    bool CreateUniformBuffer(uint32_t bufferSize);
 
     // mesh API
     using MeshIDType = uint32_t;
@@ -81,12 +80,12 @@ public:
 private:
 
     // pipeline setup
+    bool CreateUniformBuffer();
     bool SetupDescriptorSets();
     void SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
         const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo);
-
-    bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
     void CreatePipelineLayout();
+    bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams, const SetupParams& params);
 
     // rendering pipeline setup
     VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;

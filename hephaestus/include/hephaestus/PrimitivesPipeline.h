@@ -41,7 +41,6 @@ public:
 
     // render data setup
     bool SetupPipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
-    bool CreateUniformBuffer(uint32_t bufferSize);
 
     // add a set of points that would be treated as part of a continuous line strip
     bool AddLineStripData(const VulkanUtils::BufferUpdateInfo& updateInfo);
@@ -63,6 +62,7 @@ public:
 
 
 private:
+    bool CreateUniformBuffer();
     bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
     bool SetupDescriptorSets();
     bool UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer);

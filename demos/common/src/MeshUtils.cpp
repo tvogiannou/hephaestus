@@ -175,14 +175,6 @@ MeshUtils::SetupPipelineForMesh(const TriMesh& mesh,
             return false;
     }
 
-    // add uniform buffer
-    {
-        const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-            outPipeline.GetDeviceManager(), TriMeshPipeline::UniformBufferData::UniformSize);
-        if (!outPipeline.CreateUniformBuffer(bufferSize))
-            return false;
-    }
-
     // setup the pipeline
     if (!outPipeline.SetupPipeline(renderPass, shaderParams, pipelineParams))
         return false;
@@ -214,11 +206,6 @@ MeshUtils::SetupPrimitivesPipeline(
     outPipeline.CreateStageBuffer(stageSize);
 
     if (!outPipeline.CreateVertexBuffer(vertexCopyDataSize))
-        return false;
-
-    const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-            outPipeline.GetDeviceManager(), PrimitivesPipeline::UniformBufferData::UniformSize);
-    if (!outPipeline.CreateUniformBuffer(bufferSize))
         return false;
 
     VulkanUtils::BufferUpdateInfo updateInfo;

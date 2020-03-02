@@ -54,6 +54,9 @@ bool
 PrimitivesPipeline::SetupPipeline(
     vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams)
 {
+    if (!CreateUniformBuffer())
+        return false;
+
     if (!SetupDescriptorSets())
         return false;
 
@@ -242,8 +245,11 @@ PrimitivesPipeline::UpdateUniformBufferData(const VulkanUtils::BufferInfo& unifo
 }
 
 bool
-PrimitivesPipeline::CreateUniformBuffer(uint32_t bufferSize)
+PrimitivesPipeline::CreateUniformBuffer()
 {
+    const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
+        m_deviceManager, PrimitivesPipeline::UniformBufferData::UniformSize);
+
     return VulkanUtils::CreateBuffer(m_deviceManager, bufferSize,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::MemoryPropertyFlagBits::eHostVisible,
