@@ -452,14 +452,14 @@ TriMeshPipeline::MeshUpdateVertexData(MeshIDType meshId,
 }
 
 bool
-TriMeshPipeline::UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
+TriMeshPipeline::UpdateProjectionMatrix(const Matrix4x4f& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(m_uniformBufferData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
     return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
 }
 
 bool
-TriMeshPipeline::UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
+TriMeshPipeline::UpdateViewMatrix(const Matrix4x4f& viewMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(&m_uniformBufferData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
     return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
@@ -467,7 +467,7 @@ TriMeshPipeline::UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::C
 
 bool
 TriMeshPipeline::UpdateViewAndProjectionMatrix(
-    const std::array<float, 16>& viewMatrix, const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
+    const Matrix4x4f& viewMatrix, const Matrix4x4f& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(m_uniformBufferData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
     std::memcpy(&m_uniformBufferData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
@@ -475,7 +475,7 @@ TriMeshPipeline::UpdateViewAndProjectionMatrix(
 }
 
 bool
-TriMeshPipeline::UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer)
+TriMeshPipeline::UpdateLightPos(const Vector4f& lightPos, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(&m_uniformBufferData.raw[32 * sizeof(float)], lightPos.data(), 4 * sizeof(float));
     return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);

@@ -17,6 +17,9 @@ namespace hephaestus
 class TriMeshPipeline : public PipelineBase
 {
 public:
+    using Matrix4x4f = std::array<float, 16>;
+    using Vector4f = std::array<float, 4>;
+
     struct VertexData
     {
         static const uint32_t IndexSize = sizeof(uint32_t);
@@ -66,11 +69,11 @@ public:
     void MeshSetVisible(uint32_t meshId, bool visible);
 
     // update uniform buffer data
-    bool UpdateProjectionMatrix(const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateViewMatrix(const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer);
+    bool UpdateProjectionMatrix(const Matrix4x4f& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
+    bool UpdateViewMatrix(const Matrix4x4f& viewMatrix, vk::CommandBuffer copyCmdBuffer);
     bool UpdateViewAndProjectionMatrix(
-        const std::array<float, 16>& viewMatrix, const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateLightPos(const std::array<float, 4>& lightPos, vk::CommandBuffer copyCmdBuffer);
+        const Matrix4x4f& viewMatrix, const Matrix4x4f& projectionMatrix, vk::CommandBuffer copyCmdBuffer);
+    bool UpdateLightPos(const Vector4f& lightPos, vk::CommandBuffer copyCmdBuffer);
     bool UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer);
 
     // Setup internal/Vulkan data, call after setting all mesh data
