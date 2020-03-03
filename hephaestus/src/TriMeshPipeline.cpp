@@ -24,7 +24,7 @@ TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInf
         // bind descriptor set 0 to scene uniform data for all meshes (view, projection, etc)
         frameInfo.drawCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout.get(), 
             0, // set 0 
-            m_descriptorSetInfo.handle.get(), nullptr);
+            m_sceneDescSetInfo.handle.get(), nullptr);
 
         for (size_t i = 0; i < m_meshInfos.size(); ++i)
         {
@@ -88,7 +88,7 @@ TriMeshPipeline::SetupDescriptorSets()
         vk::DescriptorSetLayoutCreateInfo layoutCreateInfo(
             vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
         
-        HEPHAESTUS_CHECK_RESULT_HANDLE(m_descriptorSetLayout,
+        HEPHAESTUS_CHECK_RESULT_HANDLE(m_sceneDescSetLayout,
             m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr));
     }
 
@@ -123,12 +123,12 @@ TriMeshPipeline::SetupDescriptorSets()
         // allocate descriptor set
         {
             vk::DescriptorSetAllocateInfo allocInfo(
-                m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
+                m_descriptorPool.get(), 1, &m_sceneDescSetLayout.get());
             std::vector<vk::DescriptorSet> descSet;
             HEPHAESTUS_CHECK_RESULT_RAW(descSet, m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo));
             vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
                 m_deviceManager.GetDevice(), m_descriptorPool.get());
-            m_descriptorSetInfo.handle = VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
+            m_sceneDescSetInfo.handle = VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
         }
 
         vk::DescriptorImageInfo imageInfo;
@@ -139,7 +139,7 @@ TriMeshPipeline::SetupDescriptorSets()
 
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
         descriptorWrites.emplace_back(
-            m_descriptorSetInfo.handle.get(),
+            m_sceneDescSetInfo.handle.get(),
             0,		// destination binding
             0,		// destination array element
             1,		// descriptor count
@@ -218,10 +218,10 @@ TriMeshPipeline::SetupMeshDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetI
 void
 TriMeshPipeline::CreatePipelineLayout()
 {
-    HEPHAESTUS_LOG_ASSERT(m_descriptorSetLayout, "Descriptor set layout is null");
+    HEPHAESTUS_LOG_ASSERT(m_sceneDescSetLayout, "Descriptor set layout is null");
 
     // separate sets for the scene transform (view, projection) and each mesh transform & texture
-    vk::DescriptorSetLayout layouts[2] = { m_descriptorSetLayout.get(), m_meshDescSetLayout.get() };
+    vk::DescriptorSetLayout layouts[2] = { m_sceneDescSetLayout.get(), m_meshDescSetLayout.get() };
     vk::PipelineLayoutCreateInfo layoutCreateInfo(
         vk::PipelineLayoutCreateFlags(),
         2, layouts,
@@ -429,12 +429,15 @@ TriMeshPipeline::Clear()
     m_indexBufferInfo.Clear();
     m_indexBufferCurSize = 0u;
 
+    m_sceneDescSetInfo.Clear();
+    m_sceneUBData.uniformBufferInfo.Clear();
     for (MeshInfo& info : m_meshInfos)
         info.Clear();
     m_meshInfos.clear();
 
     // make sure the descriptor pool is destroyed *after* we have destroyed the descriptor sets
-    m_descriptorSetLayout.reset(nullptr);
+    m_sceneDescSetLayout.reset(nullptr);
+    m_meshDescSetLayout.reset(nullptr);
 
     m_pipelineLayout.reset(nullptr);
     m_vulkanPipeline.reset(nullptr);

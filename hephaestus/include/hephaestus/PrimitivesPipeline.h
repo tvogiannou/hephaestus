@@ -67,6 +67,8 @@ private:
     VulkanUtils::PipelineLayoutHandle m_graphicsPipelineLayout;
     
     // uniform buffer with modelview & projection matrix for all primitives rendered
+    VulkanUtils::DescriptorSetLayoutHandle m_descriptorSetLayout;
+    VulkanUtils::DescriptorSetInfo m_descriptorSetInfo;
     VulkanUtils::BufferInfo m_uniformBufferInfo;
     UniformBufferData m_uniformBufferData;
 

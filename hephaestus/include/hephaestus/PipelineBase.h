@@ -54,10 +54,8 @@ protected:
 
     const VulkanDeviceManager& m_deviceManager;
 
-    // descriptor set data
+    // descriptor pool 
     VulkanUtils::DescriptorPoolHandle m_descriptorPool;
-    VulkanUtils::DescriptorSetLayoutHandle m_descriptorSetLayout;
-    VulkanUtils::DescriptorSetInfo m_descriptorSetInfo;
 
     // data buffers
     VulkanUtils::BufferInfo m_stageBufferInfo;	// stage buffer for temporary data

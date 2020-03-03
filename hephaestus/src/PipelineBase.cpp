@@ -60,12 +60,9 @@ PipelineBase::Clear()
     m_vertexBufferInfo.Clear();
     m_stageBufferInfo.Clear();
 
-
-    m_descriptorSetInfo.Clear();
-    m_descriptorSetLayout.reset(nullptr);  
     m_descriptorPool.reset(nullptr);     // make sure the descriptor pool is destroyed *after* we have destroyed the descriptor sets
 
     m_vertexBufferCurSize = 0u;
 }
 
-}
+} // hephaestus

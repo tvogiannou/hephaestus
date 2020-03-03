@@ -108,12 +108,16 @@ private:
     // rendering pipeline setup
     VulkanUtils::PipelineHandle         m_vulkanPipeline;
     VulkanUtils::PipelineLayoutHandle   m_pipelineLayout;
-    SceneUBData                         m_sceneUBData; // uniform data for the entire scene (all meshes)
+
+    // descriptor setup 
+    VulkanUtils::DescriptorSetLayoutHandle  m_meshDescSetLayout; // descriptor layout for per mesh descriptor sets
+    VulkanUtils::DescriptorSetLayoutHandle  m_sceneDescSetLayout; // descriptor layout for scene descriptor sets
+    VulkanUtils::DescriptorSetInfo          m_sceneDescSetInfo; // descriptor set for scene
+    SceneUBData                             m_sceneUBData; // uniform data for the entire scene (all meshes)
 
     // meshes are sharing a vertex and an index buffer
     VulkanUtils::BufferInfo                 m_indexBufferInfo;
     VkDeviceSize                            m_indexBufferCurSize; // size of data (bytes) currently set in the index buffer
-    VulkanUtils::DescriptorSetLayoutHandle  m_meshDescSetLayout; // descriptor layout for mesh descriptor sets
     struct MeshInfo
     {
         bool                            visible = true;

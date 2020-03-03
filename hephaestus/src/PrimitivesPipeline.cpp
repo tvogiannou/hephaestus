@@ -327,15 +327,15 @@ PrimitivesPipeline::Clear()
 
     m_lineStripOffsets.clear();
 
+    // make sure the descriptor pool is destroyed *after* we have destroyed the descriptor sets
     m_uniformBufferInfo.Clear();
     m_descriptorSetInfo.Clear();
-
-    // make sure the descriptor pool is destroyed *after* we have destroyed the descriptor sets
     m_descriptorSetLayout.reset(nullptr);
 
     m_graphicsPipelineLayout.reset(nullptr);
     m_vulkanGraphicsPipeline.reset(nullptr);
+
     PipelineBase::Clear();
 }
 
-}
+} // hephaestus
