@@ -127,7 +127,7 @@ int main()
             shaderParams, params, meshPipeline), 
             "Failed to setup pipeline");
 
-        // set the camera
+        // set the camera & transform
         {
             std::array<float, 16> matrixData;
 
@@ -156,6 +156,15 @@ int main()
             view.GetRaw(matrixData);
             CHECK_EXIT_MSG(meshPipeline.UpdateViewMatrix(matrixData, renderer.GetCmdBuffer()),
                 "Failed to update view matrix");
+
+            CHECK_EXIT_MSG(meshPipeline.UpdateLightPos(
+                { { 0.0f, 1.0f, 5.0f, 1.0f } }, renderer.GetCmdBuffer()), "Failed to update light position");
+
+            // set transform for first mesh
+            hephaestus::Matrix4 model; model.SetIdentity();
+            model.GetRaw(matrixData);
+            CHECK_EXIT_MSG(meshPipeline.UpdateModelMatrix(0u, matrixData, renderer.GetCmdBuffer()),
+                "Failed to update mesh model transform");
         }
     }
 

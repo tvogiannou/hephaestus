@@ -12,30 +12,38 @@ void
 TriMeshPipeline::RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& frameInfo) const
 {
     // bind pipeline
-    frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanGraphicsPipeline.get());
+    frameInfo.drawCmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vulkanPipeline.get());
 
     // draw the indexed vertex buffer
     if (m_vertexBufferInfo.bufferHandle && m_indexBufferInfo.bufferHandle)
     {
         frameInfo.drawCmdBuffer.bindVertexBuffers(0, m_vertexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u);
-        frameInfo.drawCmdBuffer.bindIndexBuffer(m_indexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u, vk::IndexType::eUint32);
+        frameInfo.drawCmdBuffer.bindIndexBuffer(
+            m_indexBufferInfo.bufferHandle.get(), (VkDeviceSize)0u, vk::IndexType::eUint32);
+        
+        // bind descriptor set 0 to scene uniform data for all meshes (view, projection, etc)
+        frameInfo.drawCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout.get(), 
+            0, // set 0 
+            m_descriptorSetInfo.handle.get(), nullptr);
 
-        for (size_t i = 0; i < m_MeshInfos.size(); ++i)
+        for (size_t i = 0; i < m_meshInfos.size(); ++i)
         {
-            const MeshInfo& info = m_MeshInfos[i];
+            const MeshInfo& info = m_meshInfos[i];
             if (info.visible)
             {
                 HEPHAESTUS_LOG_ASSERT(info.indexOffset >= 0, "Cannot bind sub mesh without valid index offset");
                 HEPHAESTUS_LOG_ASSERT(info.descriptorSetInfo.handle, "Cannot bind sub mesh without valid descriptor set");
 
-                frameInfo.drawCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                    m_pipelineLayout.get(), 0, info.descriptorSetInfo.handle.get(), nullptr);
+                // bind descriptor set 1 to mesh uniform buffer & texture
+                frameInfo.drawCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout.get(), 
+                    1, // set 1
+                    info.descriptorSetInfo.handle.get(), nullptr);
 
                 // compute offsets & index size from bytes to vertex indices as expected by drawIndexed()
                 const uint32_t meshIndexSize =
-                    (i + 1 == m_MeshInfos.size() ? 
+                    (i + 1 == m_meshInfos.size() ? 
                     (uint32_t)m_indexBufferCurSize : 
-                    (uint32_t)m_MeshInfos[i + 1].indexOffset) - (uint32_t)info.indexOffset;
+                    (uint32_t)m_meshInfos[i + 1].indexOffset) - (uint32_t)info.indexOffset;
 
                 const uint32_t indicesCount = meshIndexSize / VertexData::IndexSize;
                 const uint32_t indexOffset = (uint32_t)info.indexOffset / VertexData::IndexSize;
@@ -52,9 +60,6 @@ TriMeshPipeline::SetupPipeline(vk::RenderPass renderPass,
     const PipelineBase::ShaderParams& shaderParams,
     const TriMeshPipeline::SetupParams& params)
 {
-    if (!CreateUniformBuffer())
-        return false;
-
     if (!SetupDescriptorSets())
         return false;
 
@@ -70,21 +75,15 @@ TriMeshPipeline::SetupDescriptorSets()
     if (!m_descriptorPool)
         return false;
 
-    // create layouts
+    // create layout for scene desc set (0)
     {
         std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
-        layoutBindings.emplace_back(    // uniform buffer binding
+        layoutBindings.emplace_back(    // view binding
                 0,
                 vk::DescriptorType::eUniformBuffer,
                 1,
                 vk::ShaderStageFlagBits::eVertex,
                 nullptr);
-        layoutBindings.emplace_back(    // texture binding
-            1,		// binding
-            vk::DescriptorType::eCombinedImageSampler,
-            1,		// count
-            vk::ShaderStageFlagBits::eFragment,
-            nullptr);		// immutable samplers
         
         vk::DescriptorSetLayoutCreateInfo layoutCreateInfo(
             vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
@@ -93,20 +92,84 @@ TriMeshPipeline::SetupDescriptorSets()
             m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr));
     }
 
-    for (MeshInfo& info : m_MeshInfos)
-        SetupDescriptorSet(info.descriptorSetInfo, m_uniformBufferInfo, info.textureInfo);
+    // create mesh desc set layout (1)
+    {
+        std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
+        layoutBindings.emplace_back(    // model transform binding
+            0,
+            vk::DescriptorType::eUniformBuffer,
+            1,
+            vk::ShaderStageFlagBits::eVertex,
+            nullptr);
+        layoutBindings.emplace_back(    // texture binding
+            1,		// binding
+            vk::DescriptorType::eCombinedImageSampler,
+            1,		// count
+            vk::ShaderStageFlagBits::eFragment,
+            nullptr);		// immutable samplers
+
+        vk::DescriptorSetLayoutCreateInfo layoutCreateInfo(
+            vk::DescriptorSetLayoutCreateFlagBits(), (uint32_t)layoutBindings.size(), layoutBindings.data());
+
+        HEPHAESTUS_CHECK_RESULT_HANDLE(m_meshDescSetLayout,
+            m_deviceManager.GetDevice().createDescriptorSetLayoutUnique(layoutCreateInfo, nullptr));
+    }
+
+    // setup view descriptor set
+    {
+        if (!CreateUniformBuffer(m_sceneUBData.uniformBufferInfo, SceneUBData::UniformSize))
+            return false;
+
+        // allocate descriptor set
+        {
+            vk::DescriptorSetAllocateInfo allocInfo(
+                m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
+            std::vector<vk::DescriptorSet> descSet;
+            HEPHAESTUS_CHECK_RESULT_RAW(descSet, m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo));
+            vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
+                m_deviceManager.GetDevice(), m_descriptorPool.get());
+            m_descriptorSetInfo.handle = VulkanUtils::DescriptorSetHandle(descSet.front(), deleter);
+        }
+
+        vk::DescriptorImageInfo imageInfo;
+        vk::DescriptorBufferInfo bufferInfo(
+            m_sceneUBData.uniformBufferInfo.bufferHandle.get(),
+            0,		// offset
+            m_sceneUBData.uniformBufferInfo.size);
+
+        std::vector<vk::WriteDescriptorSet> descriptorWrites;
+        descriptorWrites.emplace_back(
+            m_descriptorSetInfo.handle.get(),
+            0,		// destination binding
+            0,		// destination array element
+            1,		// descriptor count
+            vk::DescriptorType::eUniformBuffer,
+            nullptr,
+            &bufferInfo,	// buffer info
+            nullptr);
+
+        m_deviceManager.GetDevice().updateDescriptorSets(descriptorWrites, nullptr);
+    }
+
+    // setup mesh descriptor sets
+    for (MeshInfo& info : m_meshInfos)
+    {
+        if(!CreateUniformBuffer(info.ubData.uniformBufferInfo, MeshUBData::UniformSize))
+            return false;
+        SetupMeshDescriptorSet(info.descriptorSetInfo, info.ubData.uniformBufferInfo, info.textureInfo);
+    }
 
     return true;
 }
 
 void 
-TriMeshPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
+TriMeshPipeline::SetupMeshDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
     const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo)
 {
     // allocate descriptor set
     {
         vk::DescriptorSetAllocateInfo allocInfo(
-            m_descriptorPool.get(), 1, &m_descriptorSetLayout.get());
+            m_descriptorPool.get(), 1, &m_meshDescSetLayout.get());
         std::vector<vk::DescriptorSet> descSet;
         HEPHAESTUS_CHECK_RESULT_RAW(descSet, m_deviceManager.GetDevice().allocateDescriptorSets(allocInfo));
         vk::PoolFree<vk::Device, vk::DescriptorPool, VulkanDispatcher> deleter(
@@ -121,17 +184,18 @@ TriMeshPipeline::SetupDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
         uniformBufferInfo.size);
 
     std::vector<vk::WriteDescriptorSet> descriptorWrites;
-    descriptorWrites.emplace_back(
-        descSetInfo.handle.get(),
-        0,		// destination binding
-        0,		// destination array element
-        1,		// descriptor count
-        vk::DescriptorType::eUniformBuffer,
-        nullptr,
-        &bufferInfo,	// buffer info
-        nullptr);
-    if (textureInfo.imageHandle)
     {
+        // uniform binding for model transform
+        descriptorWrites.emplace_back(
+            descSetInfo.handle.get(),
+            0,		// destination binding
+            0,		// destination array element
+            1,		// descriptor count
+            vk::DescriptorType::eUniformBuffer,
+            nullptr,
+            &bufferInfo,	// buffer info
+            nullptr);
+        // sampler binding for texture
         imageInfo = vk::DescriptorImageInfo(
             textureInfo.sampler.get(),
             textureInfo.view.get(),
@@ -156,9 +220,11 @@ TriMeshPipeline::CreatePipelineLayout()
 {
     HEPHAESTUS_LOG_ASSERT(m_descriptorSetLayout, "Descriptor set layout is null");
 
+    // separate sets for the scene transform (view, projection) and each mesh transform & texture
+    vk::DescriptorSetLayout layouts[2] = { m_descriptorSetLayout.get(), m_meshDescSetLayout.get() };
     vk::PipelineLayoutCreateInfo layoutCreateInfo(
         vk::PipelineLayoutCreateFlags(),
-        1, &m_descriptorSetLayout.get(),
+        2, layouts,
         0, nullptr);
     HEPHAESTUS_CHECK_RESULT_HANDLE(m_pipelineLayout,
         m_deviceManager.GetDevice().createPipelineLayoutUnique(layoutCreateInfo, nullptr));
@@ -318,40 +384,39 @@ TriMeshPipeline::CreatePipeline(vk::RenderPass renderPass,
         nullptr,						    // basePipelineHandle
         -1);								// basePipelineIndex
 
-    HEPHAESTUS_CHECK_RESULT_HANDLE(m_vulkanGraphicsPipeline, 
+    HEPHAESTUS_CHECK_RESULT_HANDLE(m_vulkanPipeline, 
         m_deviceManager.GetDevice().createGraphicsPipelineUnique(nullptr, pipelineCreateInfo, nullptr));
 
     return true;
 }
 
 bool
-TriMeshPipeline::CreateUniformBuffer()
+TriMeshPipeline::CreateUniformBuffer(VulkanUtils::BufferInfo& bufferInfo, uint32_t reqSize)
 {
-    const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-        m_deviceManager, TriMeshPipeline::UniformBufferData::UniformSize);
+    const uint32_t bufferSize = VulkanUtils::FixupFlushRange(m_deviceManager, reqSize);
 
     return VulkanUtils::CreateBuffer(m_deviceManager, bufferSize,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::MemoryPropertyFlagBits::eHostVisible,
-        m_uniformBufferInfo);
+        bufferInfo);
 }
 
 bool 
 TriMeshPipeline::MeshSetTextureData(MeshIDType meshId, 
     const VulkanUtils::TextureUpdateInfo& textureUpdateInfo)
 {
-    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_meshInfos.size(), "Sub mesh ID out of range");
 
-    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    MeshInfo& meshIdInfo = m_meshInfos[meshId];
     return VulkanUtils::CopyImageDataStage(m_deviceManager, m_stageBufferInfo, meshIdInfo.textureInfo, textureUpdateInfo);
 }
 
 void 
 TriMeshPipeline::MeshSetVisible(uint32_t meshId, bool visible)
 {
-    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_meshInfos.size(), "Sub mesh ID out of range");
 
-    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    MeshInfo& meshIdInfo = m_meshInfos[meshId];
     meshIdInfo.visible = visible;
 }
 
@@ -363,17 +428,16 @@ TriMeshPipeline::Clear()
 
     m_indexBufferInfo.Clear();
     m_indexBufferCurSize = 0u;
-    m_uniformBufferInfo.Clear();
 
-    for (MeshInfo& info : m_MeshInfos)
+    for (MeshInfo& info : m_meshInfos)
         info.Clear();
-    m_MeshInfos.clear();
+    m_meshInfos.clear();
 
     // make sure the descriptor pool is destroyed *after* we have destroyed the descriptor sets
     m_descriptorSetLayout.reset(nullptr);
 
     m_pipelineLayout.reset(nullptr);
-    m_vulkanGraphicsPipeline.reset(nullptr);
+    m_vulkanPipeline.reset(nullptr);
     PipelineBase::Clear();
 }
 
@@ -388,18 +452,18 @@ TriMeshPipeline::CreateIndexBuffer(uint32_t size)
 TriMeshPipeline::MeshIDType 
 TriMeshPipeline::CreateMeshID()
 {
-    m_MeshInfos.push_back({});
-    m_MeshInfos.back().vertexOffset = m_vertexBufferCurSize;    // create always pointing at currently 
+    m_meshInfos.push_back({});
+    m_meshInfos.back().vertexOffset = m_vertexBufferCurSize;    // create always pointing at currently 
                                                                 // available vertex buffer
-    return (MeshIDType)(m_MeshInfos.size() - 1);
+    return (MeshIDType)(m_meshInfos.size() - 1);
 }
 
 bool 
 TriMeshPipeline::MeshCreateTexture(MeshIDType meshId, uint32_t width, uint32_t height)
 {
-    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_meshInfos.size(), "Sub mesh ID out of range");
 
-    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    MeshInfo& meshIdInfo = m_meshInfos[meshId];
     return VulkanUtils::CreateImageTextureInfo(m_deviceManager, width, height, meshIdInfo.textureInfo);
 }
 
@@ -407,9 +471,9 @@ bool
 TriMeshPipeline::MeshSetIndexData(MeshIDType meshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
-    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_meshInfos.size(), "Sub mesh ID out of range");
 
-    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    MeshInfo& meshIdInfo = m_meshInfos[meshId];
     HEPHAESTUS_LOG_ASSERT(meshIdInfo.indexOffset < 0, "Updating sub mesh index data but it has already been set");
 
     meshIdInfo.indexOffset = m_indexBufferCurSize;
@@ -426,9 +490,9 @@ bool
 TriMeshPipeline::MeshSetVertexData(MeshIDType meshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)            
 {
-    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_meshInfos.size(), "Sub mesh ID out of range");
 
-    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    MeshInfo& meshIdInfo = m_meshInfos[meshId];
 
     meshIdInfo.vertexOffset = m_vertexBufferCurSize;
     if (!VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, 
@@ -444,9 +508,9 @@ bool
 TriMeshPipeline::MeshUpdateVertexData(MeshIDType meshId, 
     const VulkanUtils::BufferUpdateInfo& updateInfo)
 {
-    HEPHAESTUS_LOG_ASSERT(meshId < m_MeshInfos.size(), "Sub mesh ID out of range");
+    HEPHAESTUS_LOG_ASSERT(meshId < m_meshInfos.size(), "Sub mesh ID out of range");
 
-    MeshInfo& meshIdInfo = m_MeshInfos[meshId];
+    MeshInfo& meshIdInfo = m_meshInfos[meshId];
     return VulkanUtils::CopyBufferDataHost(
         m_deviceManager, updateInfo, m_vertexBufferInfo, meshIdInfo.vertexOffset);
 }
@@ -454,44 +518,68 @@ TriMeshPipeline::MeshUpdateVertexData(MeshIDType meshId,
 bool
 TriMeshPipeline::UpdateProjectionMatrix(const Matrix4x4f& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
-    std::memcpy(m_uniformBufferData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
-    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+    std::memcpy(m_sceneUBData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
+    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
 }
 
 bool
 TriMeshPipeline::UpdateViewMatrix(const Matrix4x4f& viewMatrix, vk::CommandBuffer copyCmdBuffer)
 {
-    std::memcpy(&m_uniformBufferData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
-    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+    std::memcpy(&m_sceneUBData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
+    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
 }
 
 bool
 TriMeshPipeline::UpdateViewAndProjectionMatrix(
     const Matrix4x4f& viewMatrix, const Matrix4x4f& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
-    std::memcpy(m_uniformBufferData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
-    std::memcpy(&m_uniformBufferData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
-    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+    std::memcpy(m_sceneUBData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
+    std::memcpy(&m_sceneUBData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
+    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
 }
 
 bool
 TriMeshPipeline::UpdateLightPos(const Vector4f& lightPos, vk::CommandBuffer copyCmdBuffer)
 {
-    std::memcpy(&m_uniformBufferData.raw[32 * sizeof(float)], lightPos.data(), 4 * sizeof(float));
-    return UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+    std::memcpy(&m_sceneUBData.raw[32 * sizeof(float)], lightPos.data(), 4 * sizeof(float));
+    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
+}
+
+bool 
+TriMeshPipeline::UpdateModelMatrix(MeshIDType meshId, 
+    const Matrix4x4f& modelMatrix, vk::CommandBuffer copyCmdBuffer)
+{
+    HEPHAESTUS_LOG_ASSERT(meshId < m_meshInfos.size(), "Sub mesh ID out of range");
+
+    MeshInfo& meshIdInfo = m_meshInfos[meshId];
+    std::memcpy(meshIdInfo.ubData.raw.data(), modelMatrix.data(), 16u * sizeof(float));
+    return UpdateUniformBufferData(meshIdInfo.ubData, copyCmdBuffer);
 }
 
 bool
-TriMeshPipeline::UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer)
+TriMeshPipeline::UpdateUniformBufferData(const SceneUBData& bufferData, vk::CommandBuffer copyCmdBuffer)
 {
     VulkanUtils::BufferUpdateInfo updateInfo;
     {
         updateInfo.copyCmdBuffer = copyCmdBuffer;
-        updateInfo.data = m_uniformBufferData.raw.data();
-        updateInfo.dataSize = (uint32_t)m_uniformBufferData.raw.size();
+        updateInfo.data = bufferData.raw.data();
+        updateInfo.dataSize = (uint32_t)bufferData.raw.size();
     }
 
-    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, uniformBufferInfo);
+    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, bufferData.uniformBufferInfo);
+}
+
+bool 
+TriMeshPipeline::UpdateUniformBufferData(const MeshUBData& bufferData, vk::CommandBuffer copyCmdBuffer)
+{
+    VulkanUtils::BufferUpdateInfo updateInfo;
+    {
+        updateInfo.copyCmdBuffer = copyCmdBuffer;
+        updateInfo.data = bufferData.raw.data();
+        updateInfo.dataSize = (uint32_t)bufferData.raw.size();
+    }
+
+    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, bufferData.uniformBufferInfo);
 }
 
 } // hephaestus

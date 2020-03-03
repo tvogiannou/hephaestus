@@ -369,6 +369,12 @@ int main(/*int argc, char** argv*/)
 
             CHECK_EXIT_MSG(renderer.m_graphicsPipeline.UpdateLightPos(
                 { { 0.0f, 1.0f, 5.0f, 1.0f } }, renderer.GetCmdBuffer()), "Failed to update light position");
+
+            // set transform for first mesh
+            hephaestus::Matrix4 model; model.SetIdentity();
+            model.GetRaw(matrixData);
+            CHECK_EXIT_MSG(renderer.m_graphicsPipeline.UpdateModelMatrix(0u, matrixData, renderer.GetCmdBuffer()),
+                "Failed to update mesh model transform");
         }
 
         // primitive pipeline setup
