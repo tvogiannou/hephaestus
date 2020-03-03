@@ -195,6 +195,32 @@ public:
         std::array<VulkanUtils::ShaderModuleHandle, MAX_SHADERS> loadedShaders;
     };
 
+    // utility template container for uniform data
+    template<uint32_t _UniformSize>
+    struct UniformBufferData
+    {
+        static const uint32_t UniformSize = _UniformSize;
+
+        std::array<char, UniformSize>   raw;
+        VulkanUtils::BufferInfo         bufferInfo;
+    };
+
+    template<uint32_t _UniformSize>
+    static bool UpdateUniformBufferData(
+        const VulkanDeviceManager& deviceManager,
+        const UniformBufferData<_UniformSize>& bufferData, 
+        vk::CommandBuffer copyCmdBuffer)
+    {
+        VulkanUtils::BufferUpdateInfo updateInfo;
+        {
+            updateInfo.copyCmdBuffer = copyCmdBuffer;
+            updateInfo.data = bufferData.raw.data();
+            updateInfo.dataSize = (uint32_t)bufferData.raw.size();
+        }
+
+        return VulkanUtils::CopyBufferDataHost(deviceManager, updateInfo, bufferData.bufferInfo);
+    }
+
 public:
     // Utils methods
 

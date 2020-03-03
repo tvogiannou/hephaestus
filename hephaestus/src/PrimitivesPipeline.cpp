@@ -42,7 +42,7 @@ PrimitivesPipeline::UpdateProjectionMatrix(
     const std::array<float, 16>& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(m_uniformBufferData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
-    return PrimitivesPipeline::UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+    return VulkanUtils::UpdateUniformBufferData(m_deviceManager, m_uniformBufferData, copyCmdBuffer);
 }
 
 bool 
@@ -50,7 +50,7 @@ PrimitivesPipeline::UpdateViewMatrix(
     const std::array<float, 16>& viewMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(&m_uniformBufferData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
-    return PrimitivesPipeline::UpdateUniformBufferData(m_uniformBufferInfo, copyCmdBuffer);
+    return VulkanUtils::UpdateUniformBufferData(m_deviceManager, m_uniformBufferData, copyCmdBuffer);
 }
 
 bool 
@@ -237,29 +237,16 @@ PrimitivesPipeline::CreatePipeline(
     return true;
 }
 
-bool 
-PrimitivesPipeline::UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer)
-{
-    VulkanUtils::BufferUpdateInfo updateInfo;
-    {
-        updateInfo.copyCmdBuffer = copyCmdBuffer;
-        updateInfo.data = m_uniformBufferData.raw.data();
-        updateInfo.dataSize = (uint32_t)m_uniformBufferData.raw.size();
-    }
-
-    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, uniformBufferInfo);
-}
-
 bool
 PrimitivesPipeline::CreateUniformBuffer()
 {
     const uint32_t bufferSize = VulkanUtils::FixupFlushRange(
-        m_deviceManager, PrimitivesPipeline::UniformBufferData::UniformSize);
+        m_deviceManager, PrimitivesPipeline::PrimitiveUBData::UniformSize);
 
     return VulkanUtils::CreateBuffer(m_deviceManager, bufferSize,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::MemoryPropertyFlagBits::eHostVisible,
-        m_uniformBufferInfo);
+        m_uniformBufferData.bufferInfo);
 }
 
 bool
@@ -299,9 +286,9 @@ PrimitivesPipeline::SetupDescriptorSets()
     }
 
     vk::DescriptorBufferInfo bufferInfo(
-        m_uniformBufferInfo.bufferHandle.get(),
+        m_uniformBufferData.bufferInfo.bufferHandle.get(),
         0,		// offset
-        m_uniformBufferInfo.size);
+        m_uniformBufferData.bufferInfo.size);
 
     std::vector<vk::WriteDescriptorSet> descriptorWrites;
     descriptorWrites.emplace_back(
@@ -328,7 +315,7 @@ PrimitivesPipeline::Clear()
     m_lineStripOffsets.clear();
 
     // make sure the descriptor pool is destroyed *after* we have destroyed the descriptor sets
-    m_uniformBufferInfo.Clear();
+    m_uniformBufferData.bufferInfo.Clear();
     m_descriptorSetInfo.Clear();
     m_descriptorSetLayout.reset(nullptr);
 

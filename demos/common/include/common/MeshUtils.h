@@ -33,7 +33,6 @@ struct MeshUtils
     };
 
     static bool ComputeSmoothNormals(TriMesh& mesh);
-    //static bool ApplyTransform(const Matrix4& transform, TriMesh& mesh);
     static AxisAlignedBoundingBox ComputeBoundingBox(const TriMesh& trimesh);
 
     static bool SetupPipelineForMesh(

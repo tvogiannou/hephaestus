@@ -25,14 +25,9 @@ public:
     };
 
     // data format for the uniform buffer used by the primitives pipeline
-    struct UniformBufferData
-    {
-        static const uint32_t UniformSize = 32 * sizeof(float);
-
-        // [0-15]  -> 4x4 projection matrix
-        // [16-31] -> 4x4 modelview matrix
-        std::array<char, UniformSize> raw;
-    };
+    // [0-15]  -> 4x4 projection matrix
+    // [16-31] -> 4x4 modelview matrix
+    using PrimitiveUBData = VulkanUtils::UniformBufferData<32u * sizeof(float)>;
 
 public:
     explicit PrimitivesPipeline(const VulkanDeviceManager& _deviceManager) :
@@ -60,17 +55,15 @@ private:
     bool CreateUniformBuffer();
     bool CreatePipeline(vk::RenderPass renderPass, const PipelineBase::ShaderParams& shaderParams);
     bool SetupDescriptorSets();
-    bool UpdateUniformBufferData(const VulkanUtils::BufferInfo& uniformBufferInfo, vk::CommandBuffer copyCmdBuffer);
 
     // rendering pipeline setup
     VulkanUtils::PipelineHandle m_vulkanGraphicsPipeline;
     VulkanUtils::PipelineLayoutHandle m_graphicsPipelineLayout;
     
-    // uniform buffer with modelview & projection matrix for all primitives rendered
+    // uniform buffer with view & projection matrix for all primitives rendered
     VulkanUtils::DescriptorSetLayoutHandle m_descriptorSetLayout;
     VulkanUtils::DescriptorSetInfo m_descriptorSetInfo;
-    VulkanUtils::BufferInfo m_uniformBufferInfo;
-    UniformBufferData m_uniformBufferData;
+    PrimitiveUBData m_uniformBufferData;
 
     std::vector<VkDeviceSize> m_lineStripOffsets;  // offsets to the vertex buffer
 };

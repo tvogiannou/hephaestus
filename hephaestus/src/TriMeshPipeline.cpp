@@ -117,7 +117,7 @@ TriMeshPipeline::SetupDescriptorSets()
 
     // setup view descriptor set
     {
-        if (!CreateUniformBuffer(m_sceneUBData.uniformBufferInfo, SceneUBData::UniformSize))
+        if (!CreateUniformBuffer(m_sceneUBData.bufferInfo, SceneUBData::UniformSize))
             return false;
 
         // allocate descriptor set
@@ -133,9 +133,9 @@ TriMeshPipeline::SetupDescriptorSets()
 
         vk::DescriptorImageInfo imageInfo;
         vk::DescriptorBufferInfo bufferInfo(
-            m_sceneUBData.uniformBufferInfo.bufferHandle.get(),
+            m_sceneUBData.bufferInfo.bufferHandle.get(),
             0,		// offset
-            m_sceneUBData.uniformBufferInfo.size);
+            m_sceneUBData.bufferInfo.size);
 
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
         descriptorWrites.emplace_back(
@@ -154,9 +154,9 @@ TriMeshPipeline::SetupDescriptorSets()
     // setup mesh descriptor sets
     for (MeshInfo& info : m_meshInfos)
     {
-        if(!CreateUniformBuffer(info.ubData.uniformBufferInfo, MeshUBData::UniformSize))
+        if(!CreateUniformBuffer(info.ubData.bufferInfo, MeshUBData::UniformSize))
             return false;
-        SetupMeshDescriptorSet(info.descriptorSetInfo, info.ubData.uniformBufferInfo, info.textureInfo);
+        SetupMeshDescriptorSet(info.descriptorSetInfo, info.ubData.bufferInfo, info.textureInfo);
     }
 
     return true;
@@ -164,7 +164,7 @@ TriMeshPipeline::SetupDescriptorSets()
 
 void 
 TriMeshPipeline::SetupMeshDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
-    const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo)
+    const VulkanUtils::BufferInfo& bufferInfo, const VulkanUtils::ImageInfo& textureInfo)
 {
     // allocate descriptor set
     {
@@ -178,10 +178,10 @@ TriMeshPipeline::SetupMeshDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetI
     }
 
     vk::DescriptorImageInfo imageInfo;
-    vk::DescriptorBufferInfo bufferInfo(
-        uniformBufferInfo.bufferHandle.get(),
+    vk::DescriptorBufferInfo descBufferInfo(
+        bufferInfo.bufferHandle.get(),
         0,		// offset
-        uniformBufferInfo.size);
+        bufferInfo.size);
 
     std::vector<vk::WriteDescriptorSet> descriptorWrites;
     {
@@ -193,7 +193,7 @@ TriMeshPipeline::SetupMeshDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetI
             1,		// descriptor count
             vk::DescriptorType::eUniformBuffer,
             nullptr,
-            &bufferInfo,	// buffer info
+            &descBufferInfo,	// buffer info
             nullptr);
         // sampler binding for texture
         imageInfo = vk::DescriptorImageInfo(
@@ -430,7 +430,7 @@ TriMeshPipeline::Clear()
     m_indexBufferCurSize = 0u;
 
     m_sceneDescSetInfo.Clear();
-    m_sceneUBData.uniformBufferInfo.Clear();
+    m_sceneUBData.bufferInfo.Clear();
     for (MeshInfo& info : m_meshInfos)
         info.Clear();
     m_meshInfos.clear();
@@ -522,14 +522,14 @@ bool
 TriMeshPipeline::UpdateProjectionMatrix(const Matrix4x4f& projectionMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(m_sceneUBData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
-    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
+    return VulkanUtils::UpdateUniformBufferData(m_deviceManager, m_sceneUBData, copyCmdBuffer);
 }
 
 bool
 TriMeshPipeline::UpdateViewMatrix(const Matrix4x4f& viewMatrix, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(&m_sceneUBData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
-    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
+    return VulkanUtils::UpdateUniformBufferData(m_deviceManager, m_sceneUBData, copyCmdBuffer);
 }
 
 bool
@@ -538,14 +538,14 @@ TriMeshPipeline::UpdateViewAndProjectionMatrix(
 {
     std::memcpy(m_sceneUBData.raw.data(), projectionMatrix.data(), 16u * sizeof(float));
     std::memcpy(&m_sceneUBData.raw[16 * sizeof(float)], viewMatrix.data(), 16u * sizeof(float));
-    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
+    return VulkanUtils::UpdateUniformBufferData(m_deviceManager, m_sceneUBData, copyCmdBuffer);
 }
 
 bool
 TriMeshPipeline::UpdateLightPos(const Vector4f& lightPos, vk::CommandBuffer copyCmdBuffer)
 {
     std::memcpy(&m_sceneUBData.raw[32 * sizeof(float)], lightPos.data(), 4 * sizeof(float));
-    return UpdateUniformBufferData(m_sceneUBData, copyCmdBuffer);
+    return VulkanUtils::UpdateUniformBufferData(m_deviceManager, m_sceneUBData, copyCmdBuffer);
 }
 
 bool 
@@ -556,33 +556,7 @@ TriMeshPipeline::UpdateModelMatrix(MeshIDType meshId,
 
     MeshInfo& meshIdInfo = m_meshInfos[meshId];
     std::memcpy(meshIdInfo.ubData.raw.data(), modelMatrix.data(), 16u * sizeof(float));
-    return UpdateUniformBufferData(meshIdInfo.ubData, copyCmdBuffer);
-}
-
-bool
-TriMeshPipeline::UpdateUniformBufferData(const SceneUBData& bufferData, vk::CommandBuffer copyCmdBuffer)
-{
-    VulkanUtils::BufferUpdateInfo updateInfo;
-    {
-        updateInfo.copyCmdBuffer = copyCmdBuffer;
-        updateInfo.data = bufferData.raw.data();
-        updateInfo.dataSize = (uint32_t)bufferData.raw.size();
-    }
-
-    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, bufferData.uniformBufferInfo);
-}
-
-bool 
-TriMeshPipeline::UpdateUniformBufferData(const MeshUBData& bufferData, vk::CommandBuffer copyCmdBuffer)
-{
-    VulkanUtils::BufferUpdateInfo updateInfo;
-    {
-        updateInfo.copyCmdBuffer = copyCmdBuffer;
-        updateInfo.data = bufferData.raw.data();
-        updateInfo.dataSize = (uint32_t)bufferData.raw.size();
-    }
-
-    return VulkanUtils::CopyBufferDataHost(m_deviceManager, updateInfo, bufferData.uniformBufferInfo);
+    return VulkanUtils::UpdateUniformBufferData(m_deviceManager, meshIdInfo.ubData, copyCmdBuffer);
 }
 
 } // hephaestus

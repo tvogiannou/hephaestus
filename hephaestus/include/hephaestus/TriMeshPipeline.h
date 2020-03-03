@@ -32,28 +32,14 @@ public:
     };
 
     // uniform buffer data for the entire scene (projection, view transforms & light)
-    struct SceneUBData
-    {
-        static const uint32_t UniformSize = 48u * sizeof(float);
-
-        // [0-15]  -> 4x4 projection matrix
-        // [16-31] -> 4x4 camera/view matrix
-        // [32-47] -> 16 float misc shader data (e.g. light source position)
-        std::array<char, UniformSize> raw;
-
-        VulkanUtils::BufferInfo         uniformBufferInfo;
-    };
+    // [0-15]  -> 4x4 projection matrix
+    // [16-31] -> 4x4 camera/view matrix
+    // [32-47] -> 16 float misc shader data (e.g. light source position)
+    using SceneUBData = VulkanUtils::UniformBufferData<48u * sizeof(float)>;
 
     // uniform buffer data per mesh (model transform)
-    struct MeshUBData
-    {
-        static const uint32_t UniformSize = 16u * sizeof(float);
-
-        // [0-15]  -> 4x4 projection matrix
-        std::array<char, UniformSize>   raw;
-
-        VulkanUtils::BufferInfo         uniformBufferInfo;
-    };
+    // [0-15]  -> 4x4 projection matrix
+    using MeshUBData = VulkanUtils::UniformBufferData<16u * sizeof(float)>;
 
     struct SetupParams 
     {
@@ -97,8 +83,6 @@ public:
 private:
     // pipeline setup
     bool CreateUniformBuffer(VulkanUtils::BufferInfo& bufferInfo, uint32_t reqSize);
-    bool UpdateUniformBufferData(const SceneUBData& bufferData, vk::CommandBuffer copyCmdBuffer);
-    bool UpdateUniformBufferData(const MeshUBData& bufferData, vk::CommandBuffer copyCmdBuffer);
     bool SetupDescriptorSets();
     void SetupMeshDescriptorSet(VulkanUtils::DescriptorSetInfo& descSetInfo,
         const VulkanUtils::BufferInfo& uniformBufferInfo, const VulkanUtils::ImageInfo& textureInfo);
@@ -129,7 +113,7 @@ private:
 
         void Clear()
         {
-            ubData.uniformBufferInfo.Clear();
+            ubData.bufferInfo.Clear();
             indexOffset = -1;
             textureInfo.Clear();
             descriptorSetInfo.Clear();
