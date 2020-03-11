@@ -1,24 +1,87 @@
-# hephaestus
-Simple toolset for experimenting with the Vulkan API.
+## hephaestus
+Simple toolset for setting up and experimenting with the [Vulkan API](https://www.khronos.org/vulkan/).
 
-This repo has a number of usefull classes and code snipets that I have re-used in multiple occassions & platforms for setting up some very simple rendering with Vulkan. It is quite far from a "rendering framework" but simplifies some of the tedious setup needed for using Vulkan.
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [hephaestus](#hephaestus)
+  - [Overview](#overview)
+  - [Requirements](#requirements)
+  - [Adding the hephaestus lib to a project](#adding-the-hephaestus-lib-to-a-project)
+    - [CMake setup](#cmake-setup)
+    - [Build Instructions](#build-instructions)
+      - [Windows/Linux](#windowslinux)
+      - [Android](#android)
+  - [Vulkan configuration](#vulkan-configuration)
+  - [Vulkan initialization](#vulkan-initialization)
+    - [Function Dispatcher](#function-dispatcher)
+    - [Device Manager](#device-manager)
+    - [Renderer](#renderer)
+      - [Swap Chain Renderer](#swap-chain-renderer)
+      - [Headless ("offscreen") Renderer](#headless-offscreen-renderer)
+  - [Example Pipelines](#example-pipelines)
+  - [Implementation Details](#implementation-details)
+    - [Logging](#logging)
+    - [Resource management](#resource-management)
+    - [Return values](#return-values)
+    - [Synchronization](#synchronization)
+  - [FAQ](#faq)
+
+<!-- /code_chunk_output -->
+
+
+
+### Overview
+This repo contains a number of useful utilities that I have re-used in multiple occasions & platforms for setting up some very simple rendering with Vulkan. It is quite far from a "rendering framework" but simplifies some of the tedious setup needed when using Vulkan.
 
 > Part of the code is based on the tutorials by [Pawel Lapinski](https://software.intel.com/en-us/articles/api-without-secrets-introduction-to-vulkan-preface) and [Alexander Overvoorde](https://vulkan-tutorial.com/Introduction), and of-course the [repo of examples by Sascha Willems](https://github.com/SaschaWillems/Vulkan).
 
 
-## Build Instructions
+Good starting points for using the library can be found in the [previewer app demo](https://github.com/tvogiannou/hephaestus/blob/master/demos/app/main.cpp) and the [headless renderer example](https://github.com/tvogiannou/hephaestus/blob/master/demos/headless/RenderOBJToImageFile.cpp).
 
-#### Requirements
-The only build dependency of the hephaestus library is the Vulkan headers. The repo contains  which are part of the repo. The library is designed to work by dynamically loading the Vulkan library in the system, so another requirement is to have Vulkan installed. Even though not required, it is highly recommended for development to download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/).  
+### Requirements
+The only external/third-party build dependency of the hephaestus library is the [Vulkan headers](https://github.com/KhronosGroup/Vulkan-Headers). The repo contains [version 1.2.333](https://github.com/tvogiannou/hephaestus/tree/work/external/vulkan-1.2.133) of the released hpp headers. 
+The library is designed to work by dynamically loading the Vulkan library in the system, so another requirement is to have Vulkan installed. 
+Even though not required, for development purposes it is highly recommended to download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/). 
 
-#### Windows/Linux
+### Adding the hephaestus lib to a project
+The most straightforward way to use the library is to add the source files to your build system. This involves defining a build configuration with all the hephaestus source files, e.g. for Visual Studio that would be another project, and making the Vulkan headers available. This allows the recommended for custom compiler options and targets.
+
+To use hephaestus as a prebuilt library follow the [build instructions below]().
+
+#### CMake setup
+There are CMake scripts available that can be re-used with build systems designed on top of CMake. The following CMake commands describe different ways of including the hepheastus target in a CMake script.
+
+```bash
+# set this variable before processing the scripts to point to the Vulkan headers in the system
+set(HEPHAESTUS_VULKAN_HEADERS_DIR <path-to-Vulkan-headers>)
+
+# add the hephaestus static library target from an "out-of-source" directory
+add_subdirectory(<path-to-hephaestus-source>
+                 ${CMAKE_CURRENT_BINARY_DIR}/hephaestus-build
+                 EXCLUDE_FROM_ALL)
+
+# add the hephaestus static library target from an "in-source" directory 
+# hephaestus.cmake is a simple script 
+#include(<path-to-hephaestus-source>/hephaestus.cmake)
+
+# TODO: include prebuilt lib
+
+# link to the hephaestus target (static library)
+target_link_libraries(myapp hephaestus)
+```
+
+#### Build Instructions
+##### Windows/Linux
 
 The code has been tested with the following compilers
 - Visual Studio 2017
 - GCC 5.4.0
 - Clang 6.0.1
 
-The code in the repo has been built using [cmake](https://cmake.org/) and there are available scripts to use with it. The hephaestus library does not have any dependencies (other than Vulkan) and can be built with default options as is, for example
+The code in the repo has been built using [CMake](https://cmake.org/) and there are available scripts to use with it. The hephaestus library does not have any dependencies (other than Vulkan) and can be built with default options as is, for example
 
 ```bash
 cd hephaestus                               # navigate to the hephaestus source directory
@@ -28,8 +91,9 @@ cmake ..                                    # run the cmake to generate the plat
 cmake --build .                             # build the code (default config for VS)
 ```
 
-#### Android
-The library has been built and tested for android-24 with arm64-v8a & armeabi-v7a. The [Android NDK](https://developer.android.com/ndk) is required to be installed. With cmake, hephaestus can be built using clang and the provided toolchain. For example
+##### Android
+The library has been built and tested for arm64-v8a & armeabi-v7a using [Android NDK](https://developer.android.com/ndk) version 20.1.5948944. 
+With CMake, hephaestus can be built using clang and the toolchain provided by the NDK
 
 ```bash
 cmake  -DCMAKE_TOOLCHAIN_FILE=<NDK_LOCATION>/build/cmake/android.toolchain.cmake -DANDROID_TOOLCHAIN='clang' -DANDROID_ABI='arm64-v8a' -DANDROID_STL='c++_static' -DANDROID_PLATFORM=android-27 ..
@@ -37,68 +101,135 @@ cmake  -DCMAKE_TOOLCHAIN_FILE=<NDK_LOCATION>/build/cmake/android.toolchain.cmake
 
 This will built the hephaestus static lib for the target ABI and version. It can then be linked in a native Android Studio project.
 
-
-
-## Usage Guide
-
-Good starting points for using the library can be found in the [previewer app demo](https://github.com/tvogiannou/hephaestus/blob/master/demos/app/main.cpp) and the [headless renderer example](https://github.com/tvogiannou/hephaestus/blob/master/demos/headless/RenderOBJToImageFile.cpp).
-
-
-#### Adding the hephaestus lib to a project
-
-The most straightforward way to use the library is to add the source files to your build system. This involves defining a build configuration with all the hephaestus source files, e.g. for Visual Studio that would be another project, and making the Vulkan headers available. This allows the recommended for custom compiler options and targets.
-
-The library code & demos has been tested with cmake with hephaestus linked as a static library. There are available cmake scripts that can be re-used for similar cmake build setups.
-
-```bash
-# add the hephaestus static library target from an "out-of-source" directory
-add_subdirectory(<path-to-hephaestus-source>
-                 ${CMAKE_CURRENT_BINARY_DIR}/hephaestus-build
-                 EXCLUDE_FROM_ALL)
-
-# add the hephaestus static library target from an "in-source" directory 
-#include(<path-to-hephaestus-source>/hephaestus.cmake)
-
-# link to the hephaestus target
-target_link_libraries(myapp hephaestus)
-```
-
-
 ### Vulkan configuration
 
-The hephaestus library relies on a number of preprocessor definitions consumed by the Vulkan headers so code linking with the library **needs to include vulkan.h/hpp via the header provided VulkanConfig.h**.
+The hephaestus library relies on a number of preprocessor definitions consumed by the Vulkan headers so code linking with the library **needs to include Vulkan only via the header provided VulkanConfig.h**.
 
-The header is including the C++ API of Vulkan (vulkan.hpp) and defines the default dispatcher  
+The header is including the C++ API of Vulkan (vulkan.hpp) and any platform specific header  
 
-### Core concepts
+
+### Vulkan initialization
 
 #### Function Dispatcher
 
+The [Vulkan dispatcher](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanDispatcher.h) provides all the necessary setup for dynamically loading the Vulkan commands. The dispatcher also stores a global instance that is passed as the default dispatcher for functions to the vulkan.hpp header (so that there is no need to specify the dispatcher on every function call).
+
+```c++
+// example dispatcher initialization on Windows
+
+hephaestus::VulkanDispatcher::ModuleType vulkanLib = LoadLibrary("vulkan-1.dll");   // load the Vulkan library
+
+hephaestus::VulkanDispatcher::InitFromLibrary(vulkanLib);   // initialize the Vulkan loader
+hephaestus::VulkanDispatcher::LoadGlobalFunctions();        // load any loader global functions
+```
+The "global" functions are the ones that do not refer to a (pre-created) Vulkan device and/or instance. The device & instance specific functions are loaded by the Device Manager as described in the following section.
+
+The commands that will be loaded by the dispatcher are defined in [VulkanFunctions.inl](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanFunctions.inl).
+The dispatcher header also exposes & resolves symbols for the same Vulkan commands from the vulkan.h header so that they can be used when is included instead of the hpp header.
 
 #### Device Manager
-```c++
-// device manager init
+The first actual object that needs to be created & initialized for hephaestus is a [device manager](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanDeviceManager.h). The device manager will internally create a Vulkan device and an instance, alongside any other other device only related data (e.g. queues), and will resolve device & instance specific methods Vulkan commands for the dispatcher. It can also optionally wire up Vulkan validation layer reporting to hephaestus logging.
 
-// renderer setup
+The manager also holds of the present surface (window) of the host platform so it needs to be initialized with the native window handles. In case there is no window, the device manager will not initialize any presentation Vulkan data.
+
+```c++
+// example device manager initialization on Windows using GLFW
+
+hephaestus::VulkanDeviceManager deviceManager;
+
+// set window handles
+// if no window handles are defined then the device will be setup without a present surface & queue 
+hephaestus::VulkanDeviceManager::PlatformWindowInfo platformWindowInfo;
+{
+    platformWindowInfo.instance = GetModuleHandle(NULL);
+    platformWindowInfo.handle = glfwGetWin32Window(window.GetInfo().window);
+}
+
+// initialize device manager without validation layers
+bool enableValidationLayers = false;
+deviceManager.Init(platformWindowInfo, enableValidationLayers);
 ```
 
-#### Renderer setup
+> Working with multiple devices & instances is not currently supported.
 
-The renderer has API to "consume" graphics pipelines by recording their render commands during the update loop. Technically, a pipeline only needs to implement the callback to record the draw commands
+#### Renderer
+A renderer is the main point of interaction between client code and the hephaestus library, taking care of most Vulkan setup for rendering a frame.
+There two types of available renderers, depending wether the device manager has been initialized with a window handle or not (see sections below).
+
+ ```c++
+// create & initialize a swap chain renderer
+hephaestus::SwapChainRenderer renderer(deviceManager);
+renderer.Init();
+ ```
+
+The renderer has API to record drawing commands from graphics "pipelines" during the update loop. Technically, a pipeline can be anything as long as it provides a method with the following signature to record the draw commands
 ```c++
 virtual void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& /*frameInfo*/) const {}
 ```
+where the `FrameUpdateInfo` struct is a container with necessary info for the recording commands
+```c++
+// Container with info for recording draw commands during a frame update
+struct FrameUpdateInfo
+{
+    vk::CommandBuffer   drawCmdBuffer;
+    vk::Framebuffer     framebuffer;
+    vk::Image           image;
+    vk::ImageView       view;
+    vk::Extent2D        extent;
+    vk::RenderPass      renderPass;
+};
+```
+> Currently only a single render pass is supported for each of the available renderers.
 
-This is typically left to client code, however the library offers a number of example pipelines to user as reference (or potentially as is).
+The actual rendering is typically left to client code, however the library offers a number of [example pipelines](#example-pipelines) to user as reference.
 
-### Rendering Pipelines
+##### Swap Chain Renderer
+This renderer can handle the update for a present surface (window) via a [Vulkan swap chain](https://vulkan.lunarg.com/doc/view/1.0.26.0/linux/tutorial/html/05-init_swapchain.html). It is typically called during the frame update loop. 
 
-#### Mesh pipeline example
-The *TriMeshPipeline* is a generic example of a pipeline that can render textured triangle meshes of specific vertex format (already defined by the pipeline).
+```c++
+// example frame update with the swap chain renderer 
+
+SwapChainRenderer::RenderStats stats;
+// call will block waiting on next available frame 
+SwapChainRenderer::RenderStatus status = 
+    SwapChainRenderer::RenderPipelines(renderer, stats, myPipeline);
+
+// handle resizing (or any other error status)
+if (status == SwapChainRenderer::RenderStatus::eRENDER_STATUS_RESIZE)
+    // ...
+```
+
+##### Headless ("offscreen") Renderer
+This renderer does not require a window and will render the resulting frame to an image buffer that can be retrieved later.
+
+```C++
+// render a frame using the headless renderer and copy it to a memory buffer
+
+renderer.RenderPipeline(myPipeline);
+
+// copy the rendered image to a buffer
+uint32_t numChannels = 0u; // RGB/RGBA 
+uint32_t width = 0u;
+uint32_t height = 0u;
+renderer.GetDstImageInfo(numChannels, width, height);
+
+char* imgData = reinterpret_cast<char*>(malloc(numChannels * width * height));
+renderer.GetDstImageData(imgData);
+```
+
+### Example Pipelines  
+The library contains two pipelines that can be used as reference for writing custom. more advanced ones  
+
+- [TriMeshPipeline](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/TriMeshPipeline.h) for rendering simple triangle meshes.
+- [PrimitivesPipeline](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/PrimitivesPipeline.h) for rendering lines.
+
+> Pipelines are part of the code that is updated more often as I experiment more with shaders, rendering features, etc. 
+
+The *TriMeshPipeline* is a generic example of a pipeline that can render textured triangle meshes of specific vertex format (already defined by the pipeline). Below is some sample code with an overview of the required operations for committing mesh data (mainly vertices & indices) that can be consumed by the pipeline.
 
 ```c++
 // example (pseudo)code showing how to setup the TriMeshPipeline
-// assumes there are accessible buffers with vertex & index data 
+// assumes there are accessible buffers with vertex & index data and a single texture
 
 // setup shader DB
 // this is a simple utility in the library to organize pre-compiled shaders
@@ -127,7 +258,7 @@ hephaestus::TriMeshPipeline meshPipeline(renderer.GetDeviceManager());
     }
 
     // create a new mesh in the pipeline
-    TriMeshPipeline::SubMeshIDType meshId = outPipeline.MeshCreate();
+    TriMeshPipeline::MeshIDType meshId = outPipeline.MeshCreate();
 
     // update texture data
     outPipeline.MeshCreateTexture(meshId, width, height);
@@ -150,33 +281,36 @@ hephaestus::TriMeshPipeline meshPipeline(renderer.GetDeviceManager());
     }
     hephaestus::TriMeshPipeline::SetupParams params = {};                   // default pipeline params
     meshPipeline.SetupPipeline(renderPass, shaderParams, pipelineParams));  // setup the pipeline
-}   
+}
 ```
 
 ### Implementation Details
-custom logging + Android log
-resource management
-hpp return types
-synchronization
+#### Logging
+hephaestus uses a simple stateless [logger](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/Log.h) which simply forwards string messages to std output by default (and __android_log_print for Android), including any Vulkan validation layer messages if enabled. The logger can be completely disabled by re-building the lib with `HEPHAESTUS_DISABLE_LOGGER` defined, or redirected either by modifying 
 
-## Python bindings
-As part of the demos, there is a simple python module using [pybind11](https://github.com/pybind/pybind11) exposing some basic functionality of the headless renderer.
-```bash
-git submodule update --init
+#### Resource management
+hephaestus uses throughout smart handles (`vk::UniqueHandle`) implemented in the vulkan.hpp which wrap around "naked" C types with some basic copying/moving semantics. This simplifies, to some extent, the release of Vulkan resources, but some extra care need to be taken in the order which handles are being released. 
+To ease the trouble of managing these resources, most hephaestus types define a `Clear()` method for releasing the handles in a safe order (instead of relying in the default destructor behaviour). Note though that this usually requires most types to be non-copyable.
 
-cd demos
-mkdir build && cd build
-cmake -DPYBIND11_PYTHON_VERSION=3.5 -DHEPHAESTUS_PYTHON_BINDINGS=1 .. 
-```
+#### Synchronization
+As is, the library does not offer any interface to manage synchronization between different function calls even though Vulkan offers a variety of async functionality. Practically, every call that modifies device data in any way (e.g. copying data via a command buffer) will wait for the device to finish any previous job.  
+This design decision follows the overall architecture of the library, i.e. keep it simple, as is targeted for experimental and relatively small Vulkan applications.
 
-The PYBIND11_PYTHON_VERSION is optional and can be used to explicitly specify the python version to use. Otherwise pybind11 will pick the python version setup in the system.
-
-## FAQ
+### FAQ
 *(aka questions I keep asking myself...)*
+- **How/why should I use this library?**
+
 - **Why use the C++ header (vulkan.hpp)?**
 I do not have any strong opinions on the matter, just that when initially I started learning Vulkan it was noticeably easier to follow the code when using hpp types. There are some cases where I regretted doing so (in particular when dealing with the destructors of hpp types) and may change it in the future, but for now I can live with it.
 
-- **What if I am using the C API?**
+- **Can I use the vulkan.h header?**
+
+- **Can I enable/disable Vulkan exceptions?**
+
+- **What use the function dispatcher?**
+[official guideline](https://vulkan.lunarg.com/doc/view/1.1.70.1/windows/loader_and_layer_interface.html#user-content-best-application-performance-setup)
 
 - **Why so many (base) classes?**
+
+- **Pipeline X does not support what I need, what should I do?**
 
