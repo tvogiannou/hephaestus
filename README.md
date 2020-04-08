@@ -1,4 +1,4 @@
-## hephaestus
+# hephaestus
 Simple toolset for setting up and experimenting with the [Vulkan API](https://www.khronos.org/vulkan/).
 
 
@@ -25,7 +25,6 @@ Simple toolset for setting up and experimenting with the [Vulkan API](https://ww
   - [Implementation Details](#implementation-details)
     - [Logging](#logging)
     - [Resource management](#resource-management)
-    - [Return values](#return-values)
     - [Synchronization](#synchronization)
   - [FAQ](#faq)
 
@@ -33,7 +32,7 @@ Simple toolset for setting up and experimenting with the [Vulkan API](https://ww
 
 
 
-### Overview
+## Overview
 This repo contains a number of useful utilities that I have re-used in multiple occasions & platforms for setting up some very simple rendering with Vulkan. It is quite far from a "rendering framework" but simplifies some of the tedious setup needed when using Vulkan.
 
 > Part of the code is based on the tutorials by [Pawel Lapinski](https://software.intel.com/en-us/articles/api-without-secrets-introduction-to-vulkan-preface) and [Alexander Overvoorde](https://vulkan-tutorial.com/Introduction), and of-course the [repo of examples by Sascha Willems](https://github.com/SaschaWillems/Vulkan).
@@ -41,17 +40,17 @@ This repo contains a number of useful utilities that I have re-used in multiple 
 
 Good starting points for using the library can be found in the [previewer app demo](https://github.com/tvogiannou/hephaestus/blob/master/demos/app/main.cpp) and the [headless renderer example](https://github.com/tvogiannou/hephaestus/blob/master/demos/headless/RenderOBJToImageFile.cpp).
 
-### Requirements
+## Requirements
 The only external/third-party build dependency of the hephaestus library is the [Vulkan headers](https://github.com/KhronosGroup/Vulkan-Headers). The repo contains [version 1.2.333](https://github.com/tvogiannou/hephaestus/tree/work/external/vulkan-1.2.133) of the released hpp headers. 
 The library is designed to work by dynamically loading the Vulkan library in the system, so another requirement is to have Vulkan installed. 
 Even though not required, for development purposes it is highly recommended to download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/). 
 
-### Adding the hephaestus lib to a project
+## Adding the hephaestus lib to a project
 The most straightforward way to use the library is to add the source files to your build system. This involves defining a build configuration with all the hephaestus source files, e.g. for Visual Studio that would be another project, and making the Vulkan headers available. This allows the recommended for custom compiler options and targets.
 
 To use hephaestus as a prebuilt library follow the [build instructions below]().
 
-#### CMake setup
+### CMake setup
 There are CMake scripts available that can be re-used with build systems designed on top of CMake. The following CMake commands describe different ways of including the hepheastus target in a CMake script.
 
 ```bash
@@ -73,8 +72,8 @@ add_subdirectory(<path-to-hephaestus-source>
 target_link_libraries(myapp hephaestus)
 ```
 
-#### Build Instructions
-##### Windows/Linux
+### Build Instructions
+#### Windows/Linux
 
 The code has been tested with the following compilers
 - Visual Studio 2017
@@ -91,7 +90,7 @@ cmake ..                                    # run the cmake to generate the plat
 cmake --build .                             # build the code (default config for VS)
 ```
 
-##### Android
+#### Android
 The library has been built and tested for arm64-v8a & armeabi-v7a using [Android NDK](https://developer.android.com/ndk) version 20.1.5948944. 
 With CMake, hephaestus can be built using clang and the toolchain provided by the NDK
 
@@ -101,16 +100,16 @@ cmake  -DCMAKE_TOOLCHAIN_FILE=<NDK_LOCATION>/build/cmake/android.toolchain.cmake
 
 This will built the hephaestus static lib for the target ABI and version. It can then be linked in a native Android Studio project.
 
-### Vulkan configuration
+## Vulkan configuration
 
 The hephaestus library relies on a number of preprocessor definitions consumed by the Vulkan headers so code linking with the library **needs to include Vulkan only via the header provided VulkanConfig.h**.
 
 The header is including the C++ API of Vulkan (vulkan.hpp) and any platform specific header  
 
 
-### Vulkan initialization
+## Vulkan initialization
 
-#### Function Dispatcher
+### Function Dispatcher
 
 The [Vulkan dispatcher](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanDispatcher.h) provides all the necessary setup for dynamically loading the Vulkan commands. The dispatcher also stores a global instance that is passed as the default dispatcher for functions to the vulkan.hpp header (so that there is no need to specify the dispatcher on every function call).
 
@@ -127,10 +126,10 @@ The "global" functions are the ones that do not refer to a (pre-created) Vulkan 
 The commands that will be loaded by the dispatcher are defined in [VulkanFunctions.inl](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanFunctions.inl).
 The dispatcher header also exposes & resolves symbols for the same Vulkan commands from the vulkan.h header so that they can be used when is included instead of the hpp header.
 
-#### Device Manager
-The first actual object that needs to be created & initialized for hephaestus is a [device manager](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanDeviceManager.h). The device manager will internally create a Vulkan device and an instance, alongside any other other device only related data (e.g. queues), and will resolve device & instance specific methods Vulkan commands for the dispatcher. It can also optionally wire up Vulkan validation layer reporting to hephaestus logging.
+### Device Manager
+The first actual object that needs to be created & initialized for hephaestus is a [device manager](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanDeviceManager.h). The device manager will internally create a Vulkan device and an instance, alongside any other other device only related data (e.g. queues), and will resolve device & instance specific Vulkan commands for the dispatcher. It can also optionally wire up Vulkan validation layer reporting to hephaestus logging.
 
-The manager also holds of the present surface (window) of the host platform so it needs to be initialized with the native window handles. In case there is no window, the device manager will not initialize any presentation Vulkan data.
+The manager also holds the presentation surface (window) of the host platform, so it needs to be initialized with the native window handles. In case there is no window, the device manager will not initialize any presentation Vulkan data.
 
 ```c++
 // example device manager initialization on Windows using GLFW
@@ -152,9 +151,9 @@ deviceManager.Init(platformWindowInfo, enableValidationLayers);
 
 > Working with multiple devices & instances is not currently supported.
 
-#### Renderer
+### Renderer
 A renderer is the main point of interaction between client code and the hephaestus library, taking care of most Vulkan setup for rendering a frame.
-There two types of available renderers, depending wether the device manager has been initialized with a window handle or not (see sections below).
+There are two types of available renderers, depending whether the device manager has been initialized with a window handle or not (see sections below).
 
  ```c++
 // create & initialize a swap chain renderer
@@ -183,7 +182,7 @@ struct FrameUpdateInfo
 
 The actual rendering is typically left to client code, however the library offers a number of [example pipelines](#example-pipelines) to user as reference.
 
-##### Swap Chain Renderer
+#### Swap Chain Renderer
 This renderer can handle the update for a present surface (window) via a [Vulkan swap chain](https://vulkan.lunarg.com/doc/view/1.0.26.0/linux/tutorial/html/05-init_swapchain.html). It is typically called during the frame update loop. 
 
 ```c++
@@ -199,7 +198,7 @@ if (status == SwapChainRenderer::RenderStatus::eRENDER_STATUS_RESIZE)
     // ...
 ```
 
-##### Headless ("offscreen") Renderer
+#### Headless ("offscreen") Renderer
 This renderer does not require a window and will render the resulting frame to an image buffer that can be retrieved later.
 
 ```C++
@@ -217,7 +216,7 @@ char* imgData = reinterpret_cast<char*>(malloc(numChannels * width * height));
 renderer.GetDstImageData(imgData);
 ```
 
-### Example Pipelines  
+## Example Pipelines  
 The library contains two pipelines that can be used as reference for writing custom. more advanced ones  
 
 - [TriMeshPipeline](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/TriMeshPipeline.h) for rendering simple triangle meshes.
@@ -284,30 +283,40 @@ hephaestus::TriMeshPipeline meshPipeline(renderer.GetDeviceManager());
 }
 ```
 
-### Implementation Details
-#### Logging
-hephaestus uses a simple stateless [logger](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/Log.h) which simply forwards string messages to std output by default (and __android_log_print for Android), including any Vulkan validation layer messages if enabled. The logger can be completely disabled by re-building the lib with `HEPHAESTUS_DISABLE_LOGGER` defined, or redirected either by modifying 
+## Implementation Details
+### Logging
+hephaestus uses a simple stateless [logger](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/Log.h) which simply forwards string messages to std output by default (and __android_log_print for Android), including any Vulkan validation layer messages if enabled. The logger can be completely disabled by re-building the lib with `HEPHAESTUS_DISABLE_LOGGER` defined, or redirected either by modifying the `Log.cpp` source file directly or using its API to set the log callback function.
 
-#### Resource management
+```cpp
+// custom log function
+void CustomLog(const char* msg, hephaestus::Logger::MessageType type)
+{
+    // ...
+}
+
+hephaestus::Logger::SetCallback(CustomLog);
+```
+
+### Resource management
 hephaestus uses throughout smart handles (`vk::UniqueHandle`) implemented in the vulkan.hpp which wrap around "naked" C types with some basic copying/moving semantics. This simplifies, to some extent, the release of Vulkan resources, but some extra care need to be taken in the order which handles are being released. 
 To ease the trouble of managing these resources, most hephaestus types define a `Clear()` method for releasing the handles in a safe order (instead of relying in the default destructor behaviour). Note though that this usually requires most types to be non-copyable.
 
-#### Synchronization
-As is, the library does not offer any interface to manage synchronization between different function calls even though Vulkan offers a variety of async functionality. Practically, every call that modifies device data in any way (e.g. copying data via a command buffer) will wait for the device to finish any previous job.  
+### Synchronization
+As is, the library does not offer any extra layer of abstraction over Vulkan synchronization primitives. Every call that modifies device data in any way (e.g. copying data via a command buffer) will wait for the device to finish any previous job.  
 This design decision follows the overall architecture of the library, i.e. keep it simple, as is targeted for experimental and relatively small Vulkan applications.
 
-### FAQ
+## FAQ
 *(aka questions I keep asking myself...)*
 - **How/why should I use this library?**
 
 - **Why use the C++ header (vulkan.hpp)?**
-I do not have any strong opinions on the matter, just that when initially I started learning Vulkan it was noticeably easier to follow the code when using hpp types. There are some cases where I regretted doing so (in particular when dealing with the destructors of hpp types) and may change it in the future, but for now I can live with it.
+I do not have any strong opinions on the matter, just that when I initially started learning Vulkan it was noticeably easier to follow the code when using hpp types. There are some cases where I regretted doing so (in particular when dealing with the destructors of hpp types) and may change it in the future, but for now I can live with it.
 
 - **Can I use the vulkan.h header?**
 
 - **Can I enable/disable Vulkan exceptions?**
 
-- **What use the function dispatcher?**
+- **Why use a function dispatcher?**
 [official guideline](https://vulkan.lunarg.com/doc/view/1.1.70.1/windows/loader_and_layer_interface.html#user-content-best-application-performance-setup)
 
 - **Why so many (base) classes?**
