@@ -5,7 +5,7 @@
 #include <common/MeshUtils.h>
 #include <common/Matrix4.h>
 #include <hephaestus/Log.h>
-#include <hephaestus/Platform.h>
+#include <hephaestus/Compiler.h>
 #include <hephaestus/TriMeshPipeline.h>
 #include <hephaestus/HeadlessRenderer.h>
 #include <hephaestus/VulkanConfig.h>

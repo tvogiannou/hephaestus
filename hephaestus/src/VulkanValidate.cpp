@@ -1,7 +1,7 @@
 #include <hephaestus/VulkanValidate.h>
 
 #include <hephaestus/Log.h>
-#include <hephaestus/Platform.h>
+#include <hephaestus/Compiler.h>
 #include <hephaestus/VulkanDispatcher.h>
 #include <hephaestus/VulkanConfig.h>
 #include <hephaestus/VulkanUtils.h>

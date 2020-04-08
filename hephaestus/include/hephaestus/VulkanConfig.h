@@ -42,8 +42,12 @@ namespace hephaestus
 #define VULKAN_HPP_NO_EXCEPTIONS
 
 // forward to hephaestus assert
-#define VULKAN_HPP_ASSERT HEPHAESTUS_ASSERT
+#ifdef NDEBUG
+#define HEPHAESTUS_NULL_ASSERT(expr) (void)(expr);
+#define VULKAN_HPP_ASSERT HEPHAESTUS_NULL_ASSERT
+#endif
 
+// C function prototypes will be resolved by the hephaestus Vulkan dispatcher
 #define VK_NO_PROTOTYPES
 
 #include <vulkan/vulkan.hpp>

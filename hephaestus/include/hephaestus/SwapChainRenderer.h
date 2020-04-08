@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hephaestus/Platform.h>
+#include <hephaestus/Compiler.h>
 #include <hephaestus/PipelineBase.h>
 #include <hephaestus/RendererBase.h>
 #include <hephaestus/VulkanDeviceManager.h>

@@ -2,7 +2,7 @@
 
 #include <common/Camera.h>
 #include <common/Matrix4.h>
-#include <hephaestus/Platform.h>
+#include <hephaestus/Compiler.h>
 
 #include <string>
 

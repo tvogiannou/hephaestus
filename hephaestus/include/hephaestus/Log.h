@@ -2,7 +2,7 @@
 
 // utility for logging
 
-#include <hephaestus/Platform.h>
+#include <hephaestus/Compiler.h>
 
 
 #ifdef HEPHAESTUS_DISABLE_LOGGER    // define to build with disabled logging

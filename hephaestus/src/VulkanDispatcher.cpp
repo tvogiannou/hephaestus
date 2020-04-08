@@ -1,6 +1,7 @@
 
 #include <hephaestus/VulkanDispatcher.h>
 
+#include <hephaestus/Compiler.h>
 #include <hephaestus/Log.h>
 
 
