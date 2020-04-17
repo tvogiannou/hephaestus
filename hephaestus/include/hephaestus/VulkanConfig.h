@@ -41,7 +41,7 @@ namespace hephaestus
 // disable exceptions
 #define VULKAN_HPP_NO_EXCEPTIONS
 
-// forward to hephaestus assert
+// forward to null assert to work around compiler warnings from the vulkan hpp header
 #ifdef NDEBUG
 #define HEPHAESTUS_NULL_ASSERT(expr) (void)(expr);
 #define VULKAN_HPP_ASSERT HEPHAESTUS_NULL_ASSERT
