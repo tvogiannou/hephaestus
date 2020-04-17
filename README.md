@@ -10,10 +10,10 @@ Simple toolset for setting up and experimenting with the [Vulkan API](https://ww
   - [Overview](#overview)
   - [Requirements](#requirements)
   - [Adding the hephaestus lib to a project](#adding-the-hephaestus-lib-to-a-project)
-    - [CMake setup](#cmake-setup)
     - [Build Instructions](#build-instructions)
       - [Windows/Linux](#windowslinux)
       - [Android](#android)
+    - [CMake setup](#cmake-setup)
   - [Vulkan configuration](#vulkan-configuration)
   - [Vulkan initialization](#vulkan-initialization)
     - [Function Dispatcher](#function-dispatcher)
@@ -42,35 +42,17 @@ Good starting points for using the library can be found in the [previewer app de
 
 ## Requirements
 The only external/third-party build dependency of the hephaestus library is the [Vulkan headers](https://github.com/KhronosGroup/Vulkan-Headers). The repo contains [version 1.2.333](https://github.com/tvogiannou/hephaestus/tree/work/external/vulkan-1.2.133) of the released hpp headers. 
-The library is designed to work by dynamically loading the Vulkan library in the system, so another requirement is to have Vulkan installed. 
+The library is designed to work by dynamically loading the Vulkan library in the system, so another requirement is to have Vulkan installed. In Windows, the latest GPU drivers typically install Vulkan too; if that is not the case you can install the Vulkan SDK. In Linux there are packages available on most distributions, e.g. for Ubuntu `apt install libvulkan1 vulkan-utils` .
+
+
 Even though not required, for development purposes it is highly recommended to download the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/). 
 
+
+
 ## Adding the hephaestus lib to a project
-The most straightforward way to use the library is to add the source files to your build system. This involves defining a build configuration with all the hephaestus source files, e.g. for Visual Studio that would be another project, and making the Vulkan headers available. This allows the recommended for custom compiler options and targets.
+The most straightforward way to use the library is to add the source files to your build system. This involves defining a build configuration with all the hephaestus source files, e.g. for Visual Studio that would be another project, and making the Vulkan headers available. This allows for custom compiler options and targets.
 
 To use hephaestus as a prebuilt library follow the [build instructions below]().
-
-### CMake setup
-There are CMake scripts available that can be re-used with build systems designed on top of CMake. The following CMake commands describe different ways of including the hepheastus target in a CMake script.
-
-```bash
-# set this variable before processing the scripts to point to the Vulkan headers in the system
-set(HEPHAESTUS_VULKAN_HEADERS_DIR <path-to-Vulkan-headers>)
-
-# add the hephaestus static library target from an "out-of-source" directory
-add_subdirectory(<path-to-hephaestus-source>
-                 ${CMAKE_CURRENT_BINARY_DIR}/hephaestus-build
-                 EXCLUDE_FROM_ALL)
-
-# add the hephaestus static library target from an "in-source" directory 
-# hephaestus.cmake is a simple script 
-#include(<path-to-hephaestus-source>/hephaestus.cmake)
-
-# TODO: include prebuilt lib
-
-# link to the hephaestus target (static library)
-target_link_libraries(myapp hephaestus)
-```
 
 ### Build Instructions
 #### Windows/Linux
@@ -80,7 +62,7 @@ The code has been tested with the following compilers
 - GCC 5.4.0
 - Clang 6.0.1
 
-The code in the repo has been built using [CMake](https://cmake.org/) and there are available scripts to use with it. The hephaestus library does not have any dependencies (other than Vulkan) and can be built with default options as is, for example
+The repo has been built using [CMake](https://cmake.org/) and there are available scripts to use with it. The hephaestus library does not have any dependencies (other than Vulkan) and can be built with default options as is, for example
 
 ```bash
 cd hephaestus                               # navigate to the hephaestus source directory
@@ -100,12 +82,35 @@ cmake  -DCMAKE_TOOLCHAIN_FILE=<NDK_LOCATION>/build/cmake/android.toolchain.cmake
 
 This will built the hephaestus static lib for the target ABI and version. It can then be linked in a native Android Studio project.
 
+### CMake setup
+Instead of building the library, there are CMake scripts available that can be integrated directly to build systems designed on top of CMake. The following CMake commands describe different ways of including the hepheastus target in a CMake script.
+
+```bash
+# set this variable before processing the scripts to point to the Vulkan headers in the system
+set(HEPHAESTUS_VULKAN_HEADERS_DIR <path-to-Vulkan-headers>)
+
+# add the hephaestus static library target from an "out-of-source" directory
+add_subdirectory(<path-to-hephaestus-source>
+                 ${CMAKE_CURRENT_BINARY_DIR}/hephaestus-build
+                 EXCLUDE_FROM_ALL)
+
+# add the hephaestus static library target from an "in-source" directory 
+# hephaestus.cmake is a simple script 
+#include(<path-to-hephaestus-source>/hephaestus.cmake)
+
+# include prebuilt lib
+add_library(hephaestus STATIC IMPORTED)
+set_target_properties(hephaestus PROPERTIES IMPORTED_LOCATION <path-to-hephaestus-lib>/hephaestus.a)
+set_target_properties(hephaestus PROPERTIES INTERFACE_INCLUDE_DIRECTORIES <path-to-hephaestus-source>/hephaestus/include)
+
+# link to the hephaestus target (static library)
+target_link_libraries(myapp hephaestus)
+```
+
 ## Vulkan configuration
 
-The hephaestus library relies on a number of preprocessor definitions consumed by the Vulkan headers so code linking with the library **needs to include Vulkan only via the header provided VulkanConfig.h**.
-
-The header is including the C++ API of Vulkan (vulkan.hpp) and any platform specific header  
-
+The hephaestus library relies on a number of preprocessor definitions consumed by the Vulkan headers so code linking with the library **needs to include Vulkan only via the header provided `VulkanConfig.h`**.
+The header is including the C++ API of Vulkan (vulkan.hpp) but the C API can also be used simply by including `VulkanConfig.h` before `vulkan.h`. See more details [below](#function-dispatcher).
 
 ## Vulkan initialization
 
@@ -126,10 +131,13 @@ The "global" functions are the ones that do not refer to a (pre-created) Vulkan 
 The commands that will be loaded by the dispatcher are defined in [VulkanFunctions.inl](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanFunctions.inl).
 The dispatcher header also exposes & resolves symbols for the same Vulkan commands from the vulkan.h header so that they can be used when is included instead of the hpp header.
 
+> The resolved functions are declared in `hephaestus/include/hephaestus/VulkanFunctions.inl`.
+> To add more functions: a) add their declaration in VulkanFunctions.inl using the utility macro and b) load them in the corresponding dispatcher method in `hephaestus/src/VulkanDispatcher.cpp`.
+
 ### Device Manager
 The first actual object that needs to be created & initialized for hephaestus is a [device manager](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/VulkanDeviceManager.h). The device manager will internally create a Vulkan device and an instance, alongside any other other device only related data (e.g. queues), and will resolve device & instance specific Vulkan commands for the dispatcher. It can also optionally wire up Vulkan validation layer reporting to hephaestus logging.
 
-The manager also holds the presentation surface (window) of the host platform, so it needs to be initialized with the native window handles. In case there is no window, the device manager will not initialize any presentation Vulkan data.
+The manager also holds the presentation surface (window) of the host platform, so it needs to be initialized with the native window handles. In case there is no window, the device manager will not initialize any presentation data.
 
 ```c++
 // example device manager initialization on Windows using GLFW
@@ -149,7 +157,7 @@ bool enableValidationLayers = false;
 deviceManager.Init(platformWindowInfo, enableValidationLayers);
 ```
 
-> Working with multiple devices & instances is not currently supported.
+> NOTE: Working with multiple devices & instances is not currently supported.
 
 ### Renderer
 A renderer is the main point of interaction between client code and the hephaestus library, taking care of most Vulkan setup for rendering a frame.
@@ -163,7 +171,7 @@ renderer.Init();
 
 The renderer has API to record drawing commands from graphics "pipelines" during the update loop. Technically, a pipeline can be anything as long as it provides a method with the following signature to record the draw commands
 ```c++
-virtual void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& /*frameInfo*/) const {}
+void RecordDrawCommands(const VulkanUtils::FrameUpdateInfo& /*frameInfo*/) const;
 ```
 where the `FrameUpdateInfo` struct is a container with necessary info for the recording commands
 ```c++
@@ -217,12 +225,12 @@ renderer.GetDstImageData(imgData);
 ```
 
 ## Example Pipelines  
-The library contains two pipelines that can be used as reference for writing custom. more advanced ones  
+The library contains two pipelines that can be used as reference for writing more advanced ones:
 
 - [TriMeshPipeline](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/TriMeshPipeline.h) for rendering simple triangle meshes.
 - [PrimitivesPipeline](https://github.com/tvogiannou/hephaestus/blob/master/hephaestus/include/hephaestus/PrimitivesPipeline.h) for rendering lines.
 
-> Pipelines are part of the code that is updated more often as I experiment more with shaders, rendering features, etc. 
+> Pipelines are part of the code that is updated more often so it is discouraged to rely on their compatibility over time. 
 
 The *TriMeshPipeline* is a generic example of a pipeline that can render textured triangle meshes of specific vertex format (already defined by the pipeline). Below is some sample code with an overview of the required operations for committing mesh data (mainly vertices & indices) that can be consumed by the pipeline.
 
@@ -308,18 +316,18 @@ This design decision follows the overall architecture of the library, i.e. keep 
 ## FAQ
 *(aka questions I keep asking myself...)*
 - **How/why should I use this library?**
+The library is **not a rendering framework**. It mostly provides utilities for initializing & starting Vulkan in a system so that users can focus mostly on rendering centric features.
+In terms of OpenGL it would be more akin to glut or glew than any other GL based rendering engine.
 
 - **Why use the C++ header (vulkan.hpp)?**
 I do not have any strong opinions on the matter, just that when I initially started learning Vulkan it was noticeably easier to follow the code when using hpp types. There are some cases where I regretted doing so (in particular when dealing with the destructors of hpp types) and may change it in the future, but for now I can live with it.
 
 - **Can I use the vulkan.h header?**
+Yes, see the sections on Vulkan [configuration](#vulkan-configuration) and the [dispatcher](#function-dispatcher). 
 
 - **Can I enable/disable Vulkan exceptions?**
+Vulkan exceptions are disabled by default by defining  `VULKAN_HPP_NO_EXCEPTIONS` in VulkanConfig.h. To enable them back simply comment out the #define line.
+Note, however, that the vulkan.hpp functions are declared with different return values when exceptions are enabled.
 
-- **Why use a function dispatcher?**
-[official guideline](https://vulkan.lunarg.com/doc/view/1.1.70.1/windows/loader_and_layer_interface.html#user-content-best-application-performance-setup)
-
-- **Why so many (base) classes?**
-
-- **Pipeline X does not support what I need, what should I do?**
-
+- **What is the need for a function dispatcher?**
+The dispatcher is a utility that follows the [official guideline](https://vulkan.lunarg.com/doc/view/1.1.70.1/windows/loader_and_layer_interface.html#user-content-best-application-performance-setup) from the Vulkan SDK on loading Vulkan commands dynamically for optimal stability & performance.
