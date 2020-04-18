@@ -17,14 +17,14 @@ def script_main():
     # indices = [0,1,2, 0, 2, 3]
     points, indices = hephaestus_bindings.load_obj("../data/teapot.obj")
 
-    # create a model from the mean mesh of the LSFM
+    # create a model from an OBJ file
     model = hephaestus_bindings.create_mesh(points, indices)
 
     # setup the pipeline so that it can be rendered
     hephaestus_bindings.setup_model(model)
     # hephaestus_bindings.set_light_pos(model, hephaestus_bindings.vec4(0, 0, -10, 0))
 
-    # setup projection w& place the camera
+    # setup projection & place the camera
     hephaestus_bindings.set_perspective_projection(model, width / height, 60, 0.1, 100.)
     # hephaestus_bindings.set_orthographics_projection(model, -2, 2, 2, -2, 0.1, 100)
     p = points.reshape(-1, 3)
@@ -36,16 +36,15 @@ def script_main():
     # camera = hephaestus_bindings.vec4(0, 0, -5, 1)
     hephaestus_bindings.set_camera_lookat(model, camera, target)
 
-    # # render the model using the current settings of the renderer
+    # render the model using the current settings of the renderer
     data, channels, width, height = hephaestus_bindings.render_mesh(model)
     
-    # # convert to RGB array
+    # convert to RGB array
     dataRGBA = data.reshape((width, height, channels))
     
-    # # display frame
+    # display frame
     img = Image.fromarray(dataRGBA, mode='RGBA')
     img.show()
-
 
     hephaestus_bindings.clear_system()
 
