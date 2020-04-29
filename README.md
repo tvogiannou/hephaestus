@@ -315,19 +315,19 @@ This design decision follows the overall architecture of the library, i.e. keep 
 
 ## FAQ
 *(aka questions I keep asking myself...)*
-- **How/why should I use this library?**
+- **How/why should I use this library?**  
 The library is **not a rendering framework**. It mostly provides utilities for initializing & starting Vulkan in a system so that users can focus mostly on rendering centric features.
 In terms of OpenGL it would be more akin to glut or glew than any other GL based rendering engine.
 
-- **Why use the C++ header (vulkan.hpp)?**
+- **Why use the C++ header (vulkan.hpp)?**  
 I do not have any strong opinions on the matter, just that when I initially started learning Vulkan it was noticeably easier to follow the code when using hpp types. There are some cases where I regretted doing so (in particular when dealing with the destructors of hpp types) and may change it in the future, but for now I can live with it.
 
-- **Can I use the vulkan.h header?**
+- **Can I use the vulkan.h header?**  
 Yes, see the sections on Vulkan [configuration](#vulkan-configuration) and the [dispatcher](#function-dispatcher). 
 
-- **Can I enable/disable Vulkan exceptions?**
+- **Can I enable/disable Vulkan exceptions?**  
 Vulkan exceptions are disabled by default by defining  `VULKAN_HPP_NO_EXCEPTIONS` in VulkanConfig.h. To enable them back simply comment out the #define line.
 Note, however, that the vulkan.hpp functions are declared with different return values when exceptions are enabled.
 
-- **What is the need for a function dispatcher?**
+- **What is the need for a function dispatcher?**  
 The dispatcher is a utility that follows the [official guideline](https://vulkan.lunarg.com/doc/view/1.1.70.1/windows/loader_and_layer_interface.html#user-content-best-application-performance-setup) from the Vulkan SDK on loading Vulkan commands dynamically for optimal stability & performance.
